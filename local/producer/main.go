@@ -57,6 +57,7 @@ func main() {
 
 	scfg := sarama.NewConfig()
 	scfg.Version = sarama.V1_1_0_0
+	scfg.Producer.Compression = sarama.CompressionSnappy
 	scfg.Producer.Return.Successes = true
 
 	producer, err := sarama.NewSyncProducer(strings.Split(cfg.Bootstrap, ","), scfg)
