@@ -55,7 +55,7 @@ func main() {
 	partitions := strings.Split(cfg.Partitions, ",")
 	for _, p := range partitions {
 		wg.Add(1)
-		go func() {
+		go func(p string) {
 			defer wg.Done()
 
 			pint, err := strconv.ParseInt(p, 10, 64)
@@ -88,7 +88,7 @@ func main() {
 					return
 				}
 			}
-		}()
+		}(p)
 	}
 	wg.Wait()
 	events.Log("consumer application exiting")
