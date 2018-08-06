@@ -81,6 +81,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/segmentio/ksuid"
+  packages = ["."]
+  revision = "112f929a3020abfcd06b77c963ec919130796a35"
+  version = "1.0.1"
+
+[[projects]]
   name = "github.com/segmentio/objconv"
   packages = [
     ".",
@@ -119,6 +125,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5fb294d604cd8d9bd71019c46a64be51eb088b8032d4db6b4d8a4194ab0b3fd2"
+  inputs-digest = "b42e6fef4903348db06fed366dc1aa332c97dae53adad5176274b96b90d2702a"
   solver-name = "gps-cdcl"
   solver-version = 1
