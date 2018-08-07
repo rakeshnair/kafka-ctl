@@ -6,7 +6,7 @@ build.%:
 	@echo "successfully built $(name)"
 
 docker.launch:
-	@docker run -ti --network host -v $(pwd)/build:/binaries kafka-ctl:latest sh
+	@docker run -ti --rm --network host -v $(pwd)/build:/binaries kafka-ctl:latest sh
 
 docker.build:
 	@docker build . -t kafka-ctl:latest
