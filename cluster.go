@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"os"
+
+	"github.com/olekukonko/tablewriter"
 	"github.com/segmentio/objconv/json"
 )
 
@@ -242,4 +245,87 @@ func (c *Cluster) TopicsForBroker(id BrokerID) ([]TopicPartition, error) {
 		return []TopicPartition{}, err
 	}
 	return filterByBrokerID(id, tps), nil
+}
+
+// TopicBrokerDistribution contains distribution of partitions for a specific topic
+// in a given broker
+type TopicBrokerDistribution struct {
+	Topic    string   `json:"topic"`
+	ID       BrokerID `json:"id"`
+	Leaders  []int64  `json:"leaders"`
+	Replicas []int64  `json:"replicas"`
+}
+
+// PartitionDistribution for a specific topic indicates how the leaders and replicas are
+// distributed among the available brokers in the cluster
+func (c *Cluster) PartitionDistribution(topic string) ([]TopicBrokerDistribution, error) {
+	brokers, err := c.Brokers()
+	if err != nil {
+		return []TopicBrokerDistribution{}, err
+	}
+
+	leaderMap := map[BrokerID]*Int64List{}
+	replicaMap := map[BrokerID]*Int64List{}
+	for _, broker := range brokers {
+		leaderMap[broker.Id] = newInt64List()
+		replicaMap[broker.Id] = newInt64List()
+	}
+
+	tps, err := c.TopicInfo(topic)
+	if err != nil {
+		return []TopicBrokerDistribution{}, err
+	}
+
+	for _, tp := range tps {
+		leaderMap[tp.Leader].Add(tp.Partition)
+		for _, replica := range tp.Replicas {
+			if replica != tp.Leader {
+				replicaMap[replica].Add(tp.Partition)
+			}
+		}
+	}
+
+	var pds []TopicBrokerDistribution
+	for _, broker := range brokers {
+		pds = append(pds, TopicBrokerDistribution{
+			Topic:    topic,
+			ID:       broker.Id,
+			Leaders:  leaderMap[broker.Id].GetAll(),
+			Replicas: replicaMap[broker.Id].GetAll(),
+		})
+	}
+	return pds, nil
+}
+
+func PrettyPrintPartitionDistribution(pds []TopicBrokerDistribution) {
+	tw := tablewriter.NewWriter(os.Stdout)
+	tw.SetHeader([]string{"BrokerID", "Leaders", "Replicas"})
+
+	for _, pd := range pds {
+		var row []string
+		row = append(row, fmt.Sprintf("%d", pd.ID))
+		row = append(row, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(pd.Leaders)), ","), "[]"))
+		row = append(row, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(pd.Replicas)), ","), "[]"))
+		tw.Append(row)
+	}
+
+	tw.Render()
+}
+
+type Int64List struct {
+	entries []int64
+}
+
+func newInt64List() *Int64List {
+	l := &Int64List{}
+	l.entries = []int64{}
+	return l
+}
+
+func (l *Int64List) Add(entry int64) {
+	l.entries = append(l.entries, entry)
+}
+
+func (l *Int64List) GetAll() []int64 {
+	return l.entries
 }
