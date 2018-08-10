@@ -26,6 +26,10 @@
 
 required = ["github.com/Shopify/sarama", "github.com/segmentio/conf", "github.com/segmentio/ksuid"]
 
+[prune]
+  go-tests = true
+  unused-packages = true
+
 [[constraint]]
   name = "github.com/segmentio/objconv"
   version = "0.1.0"
