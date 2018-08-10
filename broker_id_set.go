@@ -9,6 +9,9 @@ type BrokerID int64
 // an index greater than the max allowed index
 var ErrSetIndexOutOfBounds = errors.New("index out of bound")
 
+// ErrSetEmpty is thrown while trying to access an element in an empty set
+var ErrSetEmpty = errors.New("brokerIDs set is empty")
+
 // BrokerIDTreeSet is a set of BrokerIDs that maintains the natural insertion order
 type BrokerIDTreeSet struct {
 	entryMap map[BrokerID]bool
@@ -42,7 +45,7 @@ func (set *BrokerIDTreeSet) GetAll() []BrokerID {
 // Get returns an element from the set at the given index
 func (set *BrokerIDTreeSet) Get(index int) (BrokerID, error) {
 	if len(set.entries) == 0 {
-		return -1, errors.New("brokerIDs set is empty")
+		return -1, ErrSetEmpty
 	}
 	if index >= len(set.entries) {
 		return -1, ErrSetIndexOutOfBounds
