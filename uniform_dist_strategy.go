@@ -77,10 +77,10 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 	bidSet := buildBrokerIdSet(brokers, isRackAware)
 
 	// pick a random broker to start assigning partitions
-	startIndex := rand.Intn(bidSet.Length())
+	startIndex := rand.Intn(bidSet.Size())
 
 	// Mapping between a specific partition and the bidSet holding a replica
-	tpBrokerMap := map[TopicPartition]*BrokerIDSet{}
+	tpBrokerMap := map[TopicPartition]*BrokerIDTreeSet{}
 	for _, tp := range tps {
 		tpBrokerMap[tp.TopicPartition] = NewBrokerIDSet()
 	}
@@ -93,9 +93,9 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 				brokerID, err := bidSet.Get(j)
 				if err != nil {
 					switch err {
-					case ErrIndexOutOfBounds:
+					case ErrSetIndexOutOfBounds:
 						j = j + 1
-						if j > bidSet.Length() {
+						if j > bidSet.Size() {
 							j = 0
 						}
 						continue
@@ -117,7 +117,7 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 		}
 		// move a new broker for the next iteration
 		startIndex = startIndex + 1
-		if startIndex >= bidSet.Length() {
+		if startIndex >= bidSet.Size() {
 			startIndex = 0
 		}
 	}
@@ -125,18 +125,18 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 	return toPartitionReplicas(tpBrokerMap), nil
 }
 
-func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDSet) []PartitionReplicas {
+func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionReplicas {
 	var prs []PartitionReplicas
 	for tp, bids := range tpMap {
 		prs = append(prs, PartitionReplicas{
 			TopicPartition: tp,
-			Replicas:       bids.Entries(),
+			Replicas:       bids.GetAll(),
 		})
 	}
 	return prs
 }
 
-func buildBrokerIdSet(brokers []Broker, isRackAware bool) *BrokerIDSet {
+func buildBrokerIdSet(brokers []Broker, isRackAware bool) *BrokerIDTreeSet {
 	bset := NewBrokerIDSet()
 	for _, b := range brokers {
 		bset.Add(b.Id)
