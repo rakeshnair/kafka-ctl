@@ -8,21 +8,21 @@ import (
 
 	"os"
 
+	"sort"
+
 	"github.com/olekukonko/tablewriter"
 	"github.com/segmentio/objconv/json"
 )
 
 var (
-	BrokerIdsPath         = "/brokers/ids"
-	ControllerPath        = "/controller"
-	ClusterIdPath         = "/cluster/id"
-	TopicPath             = "/brokers/topics"
-	TopicPathTemplate     = "/brokers/topics/{topic}/partitions"
-	PartitionPathTemplate = "/brokers/topics/{topic}/partitions/{partition}/state"
+	BrokerIdsPath             = "/brokers/ids"
+	ControllerPath            = "/controller"
+	ClusterIdPath             = "/cluster/id"
+	TopicPath                 = "/brokers/topics"
+	TopicPathTemplate         = "/brokers/topics/{topic}/partitions"
+	PartitionPathTemplate     = "/brokers/topics/{topic}/partitions/{partition}/state"
+	PartitionReassignmentPath = "/admin/reassign_partitions"
 )
-
-// BrokerID uniquely identifies a broker in a Kafka cluster
-type BrokerID int64
 
 // Cluster provides a client to interact with a Kafka cluster
 type Cluster struct {
@@ -32,23 +32,43 @@ type Cluster struct {
 // Broker wraps all metadata information for a single Kafka broker
 type Broker struct {
 	Id                          BrokerID          `json:"id"`
-	ListenerSecurityProtocolMap map[string]string `json:"listener_security_protocol_map"`
-	Endpoints                   []string          `json:"endpoints"`
 	Rack                        string            `json:"rack"`
-	JmxPort                     int32             `json:"jmx_port"`
 	Host                        string            `json:"host"`
 	Port                        int32             `json:"port"`
+	JmxPort                     int32             `json:"jmx_port"`
+	Endpoints                   []string          `json:"endpoints"`
 	Timestamp                   int64             `json:"timestamp"`
+	ListenerSecurityProtocolMap map[string]string `json:"listener_security_protocol_map"`
 	Version                     int               `json:"version"`
 }
 
-// TopicPartition wraps all metadata information for a single Kafka partition
+// TopicPartition wraps a single topic name and partition
 type TopicPartition struct {
-	Topic     string     `json:"topic"`
-	Partition int64      `json:"partition"`
-	Leader    BrokerID   `json:"leader"`
-	Replicas  []BrokerID `json:"replicas"`
-	ISR       []BrokerID `json:"isr"`
+	Topic     string `json:"topic"`
+	Partition int64  `json:"partition"`
+}
+
+// TopicPartitionInfo wraps all metadata information for a single Kafka partition
+type TopicPartitionInfo struct {
+	TopicPartition
+	Replication int        `json:"replication"`
+	Leader      BrokerID   `json:"leader"`
+	Replicas    []BrokerID `json:"replicas"`
+	ISR         []BrokerID `json:"isr"`
+}
+
+// PartitionReplicas wraps a topic,partition tuple and its list of replicas
+type PartitionReplicas struct {
+	TopicPartition
+	Replicas []BrokerID `json:"replicas"`
+}
+
+// ReassignmentReq is the payload that needs to be set in Zookeeper to trigger
+// a new partition reassignment
+// TODO: Add throttle configs
+type ReassignmentReq struct {
+	Version    int                 `json:"version"`
+	Partitions []PartitionReplicas `json:"partitions"`
 }
 
 // NewCluster returns a new client to interact with a Kafka cluster
@@ -95,7 +115,16 @@ func (c *Cluster) Controller() (Broker, error) {
 	return c.Broker(ctlr.BrokerId)
 }
 
-// Brokers returns the list of all brokers in the cluster
+// CollectBrokerIDs aggregates the list of BrokerIDs from the input Broker list
+func CollectBrokerIDs(brokers []Broker) []BrokerID {
+	var ids []BrokerID
+	for _, broker := range brokers {
+		ids = append(ids, broker.Id)
+	}
+	return ids
+}
+
+// Brokers returns the list of all brokerIDs in the cluster
 func (c *Cluster) Brokers() ([]Broker, error) {
 	ids, err := c.store.List(BrokerIdsPath)
 	if err != nil {
@@ -173,45 +202,48 @@ func (c *Cluster) topicReplicas(name string) (map[int64][]BrokerID, error) {
 	return res, nil
 }
 
-// TopicInfo returns the list of all partitions associated with the topic
-func (c *Cluster) TopicInfo(name string) ([]TopicPartition, error) {
+// DescribeTopic returns the list of all partitions associated with the topic
+// The output is sorted by partition number
+func (c *Cluster) DescribeTopic(name string) ([]TopicPartitionInfo, error) {
 	replicas, err := c.topicReplicas(name)
 	if err != nil {
-		return []TopicPartition{}, err
+		return []TopicPartitionInfo{}, err
 	}
 
 	s := strings.Replace(TopicPathTemplate, "{topic}", name, 1)
 	pids, err := c.store.List(s)
 	if err != nil {
-		return []TopicPartition{}, err
+		return []TopicPartitionInfo{}, err
 	}
-	var tps []TopicPartition
+	var tps []TopicPartitionInfo
 
 	withTopic := strings.Replace(PartitionPathTemplate, "{topic}", name, 1)
 	for _, pid := range pids {
 		pidpath := strings.Replace(withTopic, "{partition}", pid, 1)
 		data, err := c.store.Get(pidpath)
 		if err != nil {
-			return []TopicPartition{}, err
+			return []TopicPartitionInfo{}, err
 		}
-		var tp TopicPartition
+		var tp TopicPartitionInfo
 		err = json.Unmarshal(data, &tp)
 		if err != nil {
-			return []TopicPartition{}, err
+			return []TopicPartitionInfo{}, err
 		}
 		tp.Topic = name
 		tp.Partition, err = strconv.ParseInt(pid, 10, 64)
 		if err != nil {
-			return []TopicPartition{}, err
+			return []TopicPartitionInfo{}, err
 		}
 		tp.Replicas = replicas[tp.Partition]
+		tp.Replication = len(tp.Replicas)
 		tps = append(tps, tp)
 	}
+	sort.Sort(byPartition(tps))
 	return tps, nil
 }
 
-func filterByBrokerID(id BrokerID, tps []TopicPartition) []TopicPartition {
-	var res []TopicPartition
+func filterByBrokerID(id BrokerID, tps []TopicPartitionInfo) []TopicPartitionInfo {
+	var res []TopicPartitionInfo
 	for _, tp := range tps {
 		if tp.Leader == id {
 			res = append(res, tp)
@@ -220,29 +252,29 @@ func filterByBrokerID(id BrokerID, tps []TopicPartition) []TopicPartition {
 	return res
 }
 
-// TopicsWithDetails returns the list of all partitions associated with all the topics in the cluster
-func (c *Cluster) TopicsWithDetails() ([]TopicPartition, error) {
+// DescribeAllTopics returns the list of all partitions associated with all the topics in the cluster
+func (c *Cluster) DescribeAllTopics() ([]TopicPartitionInfo, error) {
 	topics, err := c.Topics()
 	if err != nil {
-		return []TopicPartition{}, err
+		return []TopicPartitionInfo{}, err
 	}
 
-	var res []TopicPartition
+	var res []TopicPartitionInfo
 	for _, t := range topics {
-		tpinfo, err := c.TopicInfo(t)
+		tpinfo, err := c.DescribeTopic(t)
 		if err != nil {
-			return []TopicPartition{}, err
+			return []TopicPartitionInfo{}, err
 		}
 		res = append(res, tpinfo...)
 	}
 	return res, nil
 }
 
-// TopicsForBroker returns the list of all partitions associated with all the topics in the broker
-func (c *Cluster) TopicsForBroker(id BrokerID) ([]TopicPartition, error) {
-	tps, err := c.TopicsWithDetails()
+// DescribeTopicsForBroker returns the list of all partitions associated with all the topics in the broker
+func (c *Cluster) DescribeTopicsForBroker(id BrokerID) ([]TopicPartitionInfo, error) {
+	tps, err := c.DescribeAllTopics()
 	if err != nil {
-		return []TopicPartition{}, err
+		return []TopicPartitionInfo{}, err
 	}
 	return filterByBrokerID(id, tps), nil
 }
@@ -257,7 +289,7 @@ type TopicBrokerDistribution struct {
 }
 
 // PartitionDistribution for a specific topic indicates how the leaders and replicas are
-// distributed among the available brokers in the cluster
+// distributed among the available brokerIDs in the cluster
 func (c *Cluster) PartitionDistribution(topic string) ([]TopicBrokerDistribution, error) {
 	brokers, err := c.Brokers()
 	if err != nil {
@@ -266,12 +298,13 @@ func (c *Cluster) PartitionDistribution(topic string) ([]TopicBrokerDistribution
 
 	leaderMap := map[BrokerID]*Int64List{}
 	replicaMap := map[BrokerID]*Int64List{}
+
 	for _, broker := range brokers {
 		leaderMap[broker.Id] = newInt64List()
 		replicaMap[broker.Id] = newInt64List()
 	}
 
-	tps, err := c.TopicInfo(topic)
+	tps, err := c.DescribeTopic(topic)
 	if err != nil {
 		return []TopicBrokerDistribution{}, err
 	}
@@ -312,6 +345,22 @@ func PrettyPrintPartitionDistribution(pds []TopicBrokerDistribution) {
 	tw.Render()
 }
 
+func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
+	return ReassignmentReq{
+		Version:    1,
+		Partitions: partitions,
+	}
+}
+
+func (c *Cluster) ReassignPartitions(req ReassignmentReq) error {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	err = c.store.Set(PartitionReassignmentPath, data)
+	return err
+}
+
 type Int64List struct {
 	entries []int64
 }
@@ -328,4 +377,16 @@ func (l *Int64List) Add(entry int64) {
 
 func (l *Int64List) GetAll() []int64 {
 	return l.entries
+}
+
+type byPartition []TopicPartitionInfo
+
+func (p byPartition) Len() int {
+	return len(p)
+}
+func (p byPartition) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+func (p byPartition) Less(i, j int) bool {
+	return p[i].Partition < p[j].Partition
 }

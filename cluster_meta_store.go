@@ -12,6 +12,7 @@ type ClusterMetaStore interface {
 	List(string) ([]string, error)
 	ListAll(string) ([]string, error)
 	Get(string) ([]byte, error)
+	Set(string, []byte) error
 }
 
 type ZkClusterMetaStore struct {
@@ -57,4 +58,10 @@ func (zks *ZkClusterMetaStore) ListAll(path string) ([]string, error) {
 func (zks *ZkClusterMetaStore) Get(path string) ([]byte, error) {
 	out, _, err := zks.conn.Get(path)
 	return out, err
+}
+
+func (zks *ZkClusterMetaStore) Set(path string, data []byte) error {
+	// todo: make ACL's configurable
+	_, err := zks.conn.Create(path, data, 0, zk.WorldACL(zk.PermAll))
+	return err
 }
