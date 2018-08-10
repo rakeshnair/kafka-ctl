@@ -39,23 +39,23 @@ func NewUniformDistStrategy(configs UniformDistStrategyConfigs) *UniformDistStra
 }
 
 // Assignments returns a distribution where partitions are uniformly distributed among brokers
-func (uds *UniformDistStrategy) Assignments() ([]PartitionDistribution, error) {
-	var prs []PartitionDistribution
+func (uds *UniformDistStrategy) Assignments() ([]PartitionReplicas, error) {
+	var prs []PartitionReplicas
 	for _, topic := range uds.topics {
 		tprs, err := uds.topicAssignments(topic)
 		if err != nil {
-			return []PartitionDistribution{}, err
+			return []PartitionReplicas{}, err
 		}
 		prs = append(prs, tprs...)
 	}
 	return prs, nil
 }
 
-func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistribution, error) {
+func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionReplicas, error) {
 	if len(uds.brokerIDs) == 0 {
 		brokers, err := uds.cluster.Brokers()
 		if err != nil {
-			return []PartitionDistribution{}, err
+			return []PartitionReplicas{}, err
 		}
 		uds.brokerIDs = CollectBrokerIDs(brokers)
 	}
@@ -65,7 +65,7 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 	for _, bid := range uds.brokerIDs {
 		broker, err := uds.cluster.Broker(bid)
 		if err != nil {
-			return []PartitionDistribution{}, err
+			return []PartitionReplicas{}, err
 		}
 		brokers = append(brokers, broker)
 		isRackAware = isRackAware && (len(broker.Rack) > 0)
@@ -73,11 +73,11 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 
 	tps, err := uds.cluster.DescribeTopic(topic)
 	if err != nil {
-		return []PartitionDistribution{}, err
+		return []PartitionReplicas{}, err
 	}
 
 	if len(tps) == 0 {
-		return []PartitionDistribution{}, errors.New("no partitions to assign")
+		return []PartitionReplicas{}, errors.New("no partitions to assign")
 	}
 
 	replicationFactor := tps[0].Replication
@@ -109,7 +109,7 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 						}
 						continue
 					default:
-						return []PartitionDistribution{}, err
+						return []PartitionReplicas{}, err
 					}
 
 				}
@@ -134,12 +134,13 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 	return toPartitionReplicas(tpBrokerMap), nil
 }
 
-func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionDistribution {
-	var prs []PartitionDistribution
+func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionReplicas {
+	var prs []PartitionReplicas
 	for tp, bids := range tpMap {
-		prs = append(prs, PartitionDistribution{
-			TopicPartition: tp,
-			Replicas:       bids.GetAll(),
+		prs = append(prs, PartitionReplicas{
+			Topic:     tp.Topic,
+			Partition: tp.Partition,
+			Replicas:  bids.GetAll(),
 		})
 	}
 	return prs

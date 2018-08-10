@@ -57,18 +57,19 @@ type TopicPartitionInfo struct {
 	ISR         []BrokerID `json:"isr"`
 }
 
-// PartitionDistribution wraps a topic,partition tuple and its list of replicas
-type PartitionDistribution struct {
-	TopicPartition
-	Replicas []BrokerID `json:"replicas"`
+// PartitionReplicas wraps a topic,partition tuple and its list of replicas
+type PartitionReplicas struct {
+	Topic     string     `json:"topic"`
+	Partition int64      `json:"partition"`
+	Replicas  []BrokerID `json:"replicas"`
 }
 
 // ReassignmentReq is the payload that needs to be set in Zookeeper to trigger
 // a new partition reassignment
 // TODO: Add throttle configs
 type ReassignmentReq struct {
-	Version    int                     `json:"version"`
-	Partitions []PartitionDistribution `json:"partitions"`
+	Version    int                 `json:"version"`
+	Partitions []PartitionReplicas `json:"partitions"`
 }
 
 // NewCluster returns a new client to interact with a Kafka cluster
@@ -345,7 +346,7 @@ func PrettyPrintPartitionDistribution(pds []TopicBrokerDistribution) {
 	tw.Render()
 }
 
-func (c *Cluster) PartitionReassignRequest(partitions []PartitionDistribution) ReassignmentReq {
+func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
 	return ReassignmentReq{
 		Version:    1,
 		Partitions: partitions,
