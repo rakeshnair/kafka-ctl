@@ -11,15 +11,14 @@ var ErrSetIndexOutOfBounds = errors.New("index out of bound")
 
 // BrokerIDTreeSet is a set of BrokerIDs that maintains the natural insertion order
 type BrokerIDTreeSet struct {
-	idmap   map[BrokerID]bool
-	entries []BrokerID
-	index   int
+	entryMap map[BrokerID]bool
+	entries  []BrokerID
 }
 
 // NewBrokerIDSet returns a new BrokerIDTreeSet
 func NewBrokerIDSet() *BrokerIDTreeSet {
 	bset := &BrokerIDTreeSet{}
-	bset.idmap = map[BrokerID]bool{}
+	bset.entryMap = map[BrokerID]bool{}
 	return bset
 }
 
@@ -27,8 +26,8 @@ func NewBrokerIDSet() *BrokerIDTreeSet {
 // exists it takes no action and returns false. It returns true
 // if the insert succeeds.
 func (set *BrokerIDTreeSet) Add(entry BrokerID) bool {
-	if !set.idmap[entry] {
-		set.idmap[entry] = true
+	if !set.entryMap[entry] {
+		set.entryMap[entry] = true
 		set.entries = append(set.entries, entry)
 		return true
 	}

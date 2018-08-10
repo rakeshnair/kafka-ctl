@@ -57,8 +57,8 @@ type TopicPartitionInfo struct {
 	ISR         []BrokerID `json:"isr"`
 }
 
-// PartitionReplicas wraps a topic,partition tuple and its list of replicas
-type PartitionReplicas struct {
+// PartitionDistribution wraps a topic,partition tuple and its list of replicas
+type PartitionDistribution struct {
 	TopicPartition
 	Replicas []BrokerID `json:"replicas"`
 }
@@ -67,8 +67,8 @@ type PartitionReplicas struct {
 // a new partition reassignment
 // TODO: Add throttle configs
 type ReassignmentReq struct {
-	Version    int                 `json:"version"`
-	Partitions []PartitionReplicas `json:"partitions"`
+	Version    int                     `json:"version"`
+	Partitions []PartitionDistribution `json:"partitions"`
 }
 
 // NewCluster returns a new client to interact with a Kafka cluster
@@ -345,7 +345,7 @@ func PrettyPrintPartitionDistribution(pds []TopicBrokerDistribution) {
 	tw.Render()
 }
 
-func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
+func (c *Cluster) PartitionReassignRequest(partitions []PartitionDistribution) ReassignmentReq {
 	return ReassignmentReq{
 		Version:    1,
 		Partitions: partitions,
