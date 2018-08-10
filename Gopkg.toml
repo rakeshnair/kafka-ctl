@@ -24,10 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[prune]
-  go-tests = true
-  unused-packages = true
+required = ["github.com/Shopify/sarama", "github.com/segmentio/conf", "github.com/segmentio/ksuid"]
 
 [[constraint]]
   name = "github.com/segmentio/objconv"
@@ -42,10 +39,6 @@
   version = "2.0.1"
 
 [[constraint]]
-  name = "github.com/Shopify/sarama"
-  version = "1.17.0"
-
-[[constraint]]
   name = "github.com/segmentio/ksuid"
   version = "1.0.1"
 
@@ -56,3 +49,7 @@
 [[constraint]]
   name = "github.com/stretchr/testify"
   version = "1.2.2"
+
+[[constraint]]
+  name = "github.com/Shopify/sarama"
+  version = "1.17.0"

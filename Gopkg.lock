@@ -2,79 +2,227 @@
 
 
 [[projects]]
+  digest = "1:9362b2212139b7821f73a86169bf80ce6b0264956f87d82ab3aeedb2b5c08fea"
+  name = "github.com/Shopify/sarama"
+  packages = ["."]
+  pruneopts = ""
+  revision = "35324cf48e33d8260e1c7c18854465a904ade249"
+  version = "v1.17.0"
+
+[[projects]]
+  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = ""
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:6d6672f85a84411509885eaa32f597577873de00e30729b9bb0eb1e1faa49c12"
+  name = "github.com/eapache/go-resiliency"
+  packages = ["breaker"]
+  pruneopts = ""
+  revision = "ea41b0fad31007accc7f806884dcdf3da98b79ce"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7b12ea8b50040c6c2378ec5b5a1ab722730b2bfb46e8724ded57f2c3905431fa"
+  name = "github.com/eapache/go-xerial-snappy"
+  packages = ["."]
+  pruneopts = ""
+  revision = "040cc1a32f578808623071247fdbd5cc43f37f5f"
+
+[[projects]]
+  digest = "1:d8d46d21073d0f65daf1740ebf4629c65e04bf92e14ce93c2201e8624843c3d3"
+  name = "github.com/eapache/queue"
+  packages = ["."]
+  pruneopts = ""
+  revision = "44cc805cf13205b55f69e14bcb69867d1ae92f98"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:2a5888946cdbc8aa360fd43301f9fc7869d663f60d5eedae7d4e6e5e4f06f2bf"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
+
+[[projects]]
+  digest = "1:81e673df85e765593a863f67cba4544cf40e8919590f04d67664940786c2b61a"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
+  pruneopts = ""
   revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
   version = "v0.0.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:816e800c7b5689e114c0dc6acf494553d1e7a52575764c5d6de67fb32bd8bbb2"
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
+  pruneopts = ""
   revision = "d4647c9c7a84d847478d890b816b7d8b62b0b279"
 
 [[projects]]
+  digest = "1:29e34e58f26655c4d73135cdfc0517ea2ff1483eff34e5d5ef4b6fddbb81e31b"
+  name = "github.com/pierrec/lz4"
+  packages = [
+    ".",
+    "internal/xxh32",
+  ]
+  pruneopts = ""
+  revision = "1958fd8fff7f115e79725b1288e0b878b3e06b00"
+  version = "v2.0.3"
+
+[[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = ""
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:15bcdc717654ef21128e8af3a63eec39a6d08a830e297f93d65163f87c8eb523"
+  name = "github.com/rcrowley/go-metrics"
+  packages = ["."]
+  pruneopts = ""
+  revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7fc2f428767a2521abc63f1a663d981f61610524275d6c0ea645defadd4e916f"
   name = "github.com/samuel/go-zookeeper"
   packages = ["zk"]
+  pruneopts = ""
   revision = "c4fab1ac1bec58281ad0667dc3f0907a9476ac47"
 
 [[projects]]
+  branch = "master"
+  digest = "1:4ead76ed16431afda7f07e288cc600393c245a8e66fa25da149b791e3c4570a7"
+  name = "github.com/segmentio/conf"
+  packages = ["."]
+  pruneopts = ""
+  revision = "a2a7fb2aaa3c99893d06150d50195c0be197f5d5"
+
+[[projects]]
+  digest = "1:ec83d6d8bcf197191a23c57232e086bd99a0664fec129e5cb2a2875456a6f914"
   name = "github.com/segmentio/events"
   packages = [
     ".",
     "ecslogs",
-    "text"
+    "text",
   ]
+  pruneopts = ""
   revision = "406fcabaf3d3a8c0d790b3bbf7e3f795e277124e"
   version = "v2.0.1"
 
 [[projects]]
+  digest = "1:ea476942dbb6b5e1fc5a488c521178faafab187e094372bcd74cfb39f53ecaba"
+  name = "github.com/segmentio/go-snakecase"
+  packages = ["."]
+  pruneopts = ""
+  revision = "3ecf343f213326f182b8477c337a2be66c9205b0"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:fef42d7c5058ace2f987bb1540fdfd030e2310c5039d0262694afd82258da297"
+  name = "github.com/segmentio/ksuid"
+  packages = ["."]
+  pruneopts = ""
+  revision = "112f929a3020abfcd06b77c963ec919130796a35"
+  version = "1.0.1"
+
+[[projects]]
+  digest = "1:9d7c219bddfc2c955907d556c9b2bc7dd8f161543dfe278566276940906e7961"
   name = "github.com/segmentio/objconv"
   packages = [
     ".",
+    "adapters",
+    "adapters/net",
+    "adapters/net/mail",
+    "adapters/net/url",
     "json",
-    "objutil"
+    "objutil",
+    "yaml",
   ]
+  pruneopts = ""
   revision = "8998c9cea5fb978cf489f7a8ad69159aa7be3d50"
   version = "0.1.0"
 
 [[projects]]
+  digest = "1:711eebe744c0151a9d09af2315f0bb729b2ec7637ef4c410fa90a18ef74b65b6"
   name = "github.com/stretchr/objx"
   packages = ["."]
+  pruneopts = ""
   revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
   version = "v0.1.1"
 
 [[projects]]
+  digest = "1:c587772fb8ad29ad4db67575dad25ba17a51f072ff18a22b4f0257a4d9c24f75"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
-    "mock"
+    "mock",
   ]
+  pruneopts = ""
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
+
+[[projects]]
+  digest = "1:c3a5f6c1b5cf98dee3fac0299ad0ebb088409611a9a0a138dae844828fc21840"
+  name = "gopkg.in/go-playground/mold.v2"
+  packages = [
+    ".",
+    "modifiers",
+  ]
+  pruneopts = ""
+  revision = "6bc20ce40733e8e04c2fda4523a957dd8e198948"
+  version = "v2.2.0"
+
+[[projects]]
+  branch = "v2"
+  digest = "1:bf922c860f64bb6372daa82bb9c1e8ed144e97ac7587efa80d08b4e98737e9ea"
+  name = "gopkg.in/validator.v2"
+  packages = ["."]
+  pruneopts = ""
+  revision = "135c24b11c19e52befcae2ec3fca5d9b78c4e98e"
+
+[[projects]]
+  digest = "1:f0620375dd1f6251d9973b5f2596228cc8042e887cd7f827e4220bc1ce8c30e2"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = ""
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8f949cd02ba7473aa8dd081c2f85b3149007fdc4757ae462c5a7e6b305ea4312"
+  input-imports = [
+    "github.com/Shopify/sarama",
+    "github.com/olekukonko/tablewriter",
+    "github.com/pkg/errors",
+    "github.com/samuel/go-zookeeper/zk",
+    "github.com/segmentio/conf",
+    "github.com/segmentio/events",
+    "github.com/segmentio/events/ecslogs",
+    "github.com/segmentio/events/text",
+    "github.com/segmentio/ksuid",
+    "github.com/segmentio/objconv/json",
+    "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/mock",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
