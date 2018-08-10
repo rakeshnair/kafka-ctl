@@ -26,7 +26,7 @@ var (
 
 // Cluster provides a client to interact with a Kafka cluster
 type Cluster struct {
-	store ClusterMetaStore
+	store ClusterStoreAPI
 }
 
 // Broker wraps all metadata information for a single Kafka broker
@@ -73,7 +73,7 @@ type ReassignmentReq struct {
 }
 
 // NewCluster returns a new client to interact with a Kafka cluster
-func NewCluster(store ClusterMetaStore) *Cluster {
+func NewCluster(store ClusterStoreAPI) *Cluster {
 	return &Cluster{store: store}
 }
 
@@ -114,15 +114,6 @@ func (c *Cluster) Controller() (Broker, error) {
 		return Broker{}, err
 	}
 	return c.Broker(ctlr.BrokerId)
-}
-
-// CollectBrokerIDs aggregates the list of BrokerIDs from the input Broker list
-func CollectBrokerIDs(brokers []Broker) []BrokerID {
-	var ids []BrokerID
-	for _, broker := range brokers {
-		ids = append(ids, broker.Id)
-	}
-	return ids
 }
 
 // Brokers returns the list of all brokerIDs in the cluster

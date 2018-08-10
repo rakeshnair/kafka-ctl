@@ -14,16 +14,18 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
+var randomStartIndexFn = randomStartIndex
+
 // UniformDistStrategyConfigs wraps the list of configs required to initialize a UniformDistStrategy object
 type UniformDistStrategyConfigs struct {
-	Cluster *Cluster   `json:"cluster"`
+	Cluster ClusterAPI `json:"cluster"`
 	Topics  []string   `json:"topics"`
 	Brokers []BrokerID `json:"brokerIDs"`
 }
 
 // UniformDistStrategy implements a Strategy that uniformly distributes all topic partitions among available brokers
 type UniformDistStrategy struct {
-	cluster   *Cluster
+	cluster   ClusterAPI
 	name      string
 	topics    []string
 	brokerIDs []BrokerID
@@ -51,23 +53,29 @@ func (uds *UniformDistStrategy) Assignments() ([]PartitionReplicas, error) {
 	return prs, nil
 }
 
-func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionReplicas, error) {
-	if len(uds.brokerIDs) == 0 {
-		brokers, err := uds.cluster.Brokers()
-		if err != nil {
-			return []PartitionReplicas{}, err
-		}
-		uds.brokerIDs = CollectBrokerIDs(brokers)
+func (uds *UniformDistStrategy) brokers(ids ...BrokerID) ([]Broker, error) {
+	if len(ids) == 0 {
+		return uds.cluster.Brokers()
 	}
-
 	var brokers []Broker
-	isRackAware := true
-	for _, bid := range uds.brokerIDs {
-		broker, err := uds.cluster.Broker(bid)
+	for _, id := range ids {
+		broker, err := uds.cluster.Broker(id)
 		if err != nil {
-			return []PartitionReplicas{}, err
+			return []Broker{}, err
 		}
 		brokers = append(brokers, broker)
+	}
+	return brokers, nil
+}
+
+func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionReplicas, error) {
+	brokers, err := uds.brokers(uds.brokerIDs...)
+	if err != nil {
+		return []PartitionReplicas{}, err
+	}
+
+	isRackAware := true
+	for _, broker := range brokers {
 		isRackAware = isRackAware && (len(broker.Rack) > 0)
 	}
 
@@ -86,7 +94,7 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 	bidSet := buildBrokerIDSet(brokers, isRackAware)
 
 	// pick a random broker to start assigning partitions
-	startIndex := rand.Intn(bidSet.Size())
+	startIndex := randomStartIndexFn(bidSet.Size())
 
 	// Mapping between a specific partition and the bidSet holding a replica
 	tpBrokerMap := map[TopicPartition]*BrokerIDTreeSet{}
@@ -178,6 +186,7 @@ func buildBrokerIDSet(brokers []Broker, isRackAware bool) *BrokerIDTreeSet {
 		return bset
 	}
 
+	// handle case where rack awareness not enabled
 	for _, b := range brokers {
 		bset.Add(b.Id)
 	}
@@ -219,6 +228,14 @@ func merge(groups [][]BrokerID) ([]BrokerID, [][]BrokerID) {
 
 // Note: split does not check for empty slices as input
 // Ensure its checked before invoking split
-func split(grp []BrokerID) (BrokerID, []BrokerID) {
-	return grp[0], grp[1:]
+func split(grp []BrokerID) (BrokerID, []BrokerID) { return grp[0], grp[1:] }
+
+func randomStartIndex(max int) int { return rand.Intn(max) }
+
+func collectBrokerIDs(brokers []Broker) []BrokerID {
+	var ids []BrokerID
+	for _, broker := range brokers {
+		ids = append(ids, broker.Id)
+	}
+	return ids
 }

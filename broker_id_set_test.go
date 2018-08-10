@@ -43,7 +43,7 @@ func TestBrokerIDTreeSet_GetAll(t *testing.T) {
 			assert.Equal(t, 0, len(actual))
 			continue
 		}
-		assert.Equal(t, test.expectedState, actual)
+		assert.EqualValues(t, test.expectedState, actual)
 	}
 }
 

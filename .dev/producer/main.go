@@ -20,6 +20,7 @@ import (
 	"github.com/segmentio/events"
 	_ "github.com/segmentio/events/ecslogs"
 	_ "github.com/segmentio/events/text"
+	"github.com/segmentio/kafka-ctl/.dev/message"
 	"github.com/segmentio/ksuid"
 )
 
@@ -37,12 +38,6 @@ var (
 	version = "dev"
 	types   = []string{"track", "page", "view", "identify", "alias"}
 )
-
-type Message struct {
-	Id        string    `json:"id"`
-	Type      string    `json:"type"`
-	Timestamp time.Time `json:"timestamp"`
-}
 
 func main() {
 	prog := path.Base(os.Args[0])
@@ -67,7 +62,7 @@ func main() {
 	}
 
 	for i := 0; i < cfg.Count; i++ {
-		msg, err := json.Marshal(Message{
+		msg, err := json.Marshal(message.Message{
 			Id:        ksuid.New().String(),
 			Type:      types[rand.Intn(len(types))],
 			Timestamp: time.Now().UTC(),

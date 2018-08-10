@@ -1,8 +1,8 @@
 pwd= $(shell pwd)
 
-build.%:
-	@$(eval name=$(subst build.,,$@))
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o build/$(name)/main local/$(name)/main.go
+build.dev.%:
+	@$(eval name=$(subst build.dev.,,$@))
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o build/$(name)/main .dev/$(name)/main.go
 	@echo "successfully built $(name)"
 
 build.client:

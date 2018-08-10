@@ -18,7 +18,7 @@ import (
 	"github.com/segmentio/events"
 	_ "github.com/segmentio/events/ecslogs"
 	_ "github.com/segmentio/events/text"
-	"github.com/segmentio/kafka-ctl/local"
+	"github.com/segmentio/kafka-ctl/.dev/message"
 )
 
 type configs struct {
@@ -75,7 +75,7 @@ func main() {
 			for {
 				select {
 				case mb := <-pconsumer.Messages():
-					m := &local.Message{}
+					m := &message.Message{}
 					err := json.Unmarshal(mb.Value, m)
 					if err != nil {
 						events.Log("failed to parse message. %{err}v", err)
