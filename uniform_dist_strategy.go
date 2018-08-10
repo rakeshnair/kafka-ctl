@@ -5,6 +5,8 @@ import (
 
 	"math/rand"
 
+	"sort"
+
 	"github.com/pkg/errors"
 )
 
@@ -80,8 +82,8 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 
 	replicationFactor := tps[0].Replication
 
-	// Set of all bidSet available for serving partitions
-	bidSet := buildBrokerIdSet(brokers, isRackAware)
+	// Set of all BrokerIDs available for serving partitions
+	bidSet := buildBrokerIDSet(brokers, isRackAware)
 
 	// pick a random broker to start assigning partitions
 	startIndex := rand.Intn(bidSet.Size())
@@ -122,7 +124,7 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionDistr
 			// move to next broker once the given partition has been associated with a broker
 			j = j + 1
 		}
-		// move a new broker for the next iteration
+		// move to a new broker for the next iteration
 		startIndex = startIndex + 1
 		if startIndex >= bidSet.Size() {
 			startIndex = 0
@@ -143,10 +145,79 @@ func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionD
 	return prs
 }
 
-func buildBrokerIdSet(brokers []Broker, isRackAware bool) *BrokerIDTreeSet {
+func buildBrokerIDSet(brokers []Broker, isRackAware bool) *BrokerIDTreeSet {
 	bset := NewBrokerIDSet()
+
+	if isRackAware {
+		rackmap := map[string]*[]BrokerID{}
+		for _, b := range brokers {
+			if _, ok := rackmap[b.Rack]; !ok {
+				rackmap[b.Rack] = &[]BrokerID{}
+			}
+			ids := rackmap[b.Rack]
+			*ids = append(*ids, b.Id)
+		}
+
+		// gather rack names so that they can be sorted
+		var racks []string
+		for rack := range rackmap {
+			racks = append(racks, rack)
+		}
+		sort.Strings(racks)
+
+		var idsGrps [][]BrokerID
+		for _, rack := range racks {
+			idsGrps = append(idsGrps, *rackmap[rack])
+		}
+
+		for _, id := range mergeN(idsGrps...) {
+			bset.Add(id)
+		}
+
+		return bset
+	}
+
 	for _, b := range brokers {
 		bset.Add(b.Id)
 	}
 	return bset
+}
+
+// mergeN takes N BrokerID slice and flattens them into a single
+// slice by ensuring that elements in the same index are grouped
+// together
+//
+// for eg: mergeN({1, 2}, {3}, {4, 5, 6}, {7, 8})
+// will yield {1,3,4,7,2,5,8,6}
+func mergeN(groups ...[]BrokerID) []BrokerID {
+	var res []BrokerID
+	for {
+		out, candidate := merge(groups)
+		res = append(res, out...)
+		if len(candidate) == 0 {
+			break
+		}
+		groups = candidate
+	}
+	return res
+}
+
+func merge(groups [][]BrokerID) ([]BrokerID, [][]BrokerID) {
+	var out []BrokerID
+	var candidates [][]BrokerID
+	for _, grp := range groups {
+		if len(grp) == 0 {
+			continue
+		}
+		item, ngrp := split(grp)
+		out = append(out, item)
+		candidates = append(candidates, ngrp)
+	}
+	return out, candidates
+}
+
+// Note: split does not check for empty slices as input
+// Ensure its checked before invoking split
+func split(grp []BrokerID) (BrokerID, []BrokerID) {
+	return grp[0], grp[1:]
 }
