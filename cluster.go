@@ -230,7 +230,7 @@ func (c *Cluster) DescribeTopic(name string) ([]TopicPartitionInfo, error) {
 		tp.Replication = len(tp.Replicas)
 		tps = append(tps, tp)
 	}
-	sort.Sort(byPartition(tps))
+	sort.Sort(byPartitionInTopicPartitionInfo(tps))
 	return tps, nil
 }
 
@@ -371,14 +371,14 @@ func (l *Int64List) GetAll() []int64 {
 	return l.entries
 }
 
-type byPartition []TopicPartitionInfo
+type byPartitionInTopicPartitionInfo []TopicPartitionInfo
 
-func (p byPartition) Len() int {
+func (p byPartitionInTopicPartitionInfo) Len() int {
 	return len(p)
 }
-func (p byPartition) Swap(i, j int) {
+func (p byPartitionInTopicPartitionInfo) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
-func (p byPartition) Less(i, j int) bool {
+func (p byPartitionInTopicPartitionInfo) Less(i, j int) bool {
 	return p[i].Partition < p[j].Partition
 }

@@ -3,6 +3,8 @@ package kafkactl
 import (
 	"testing"
 
+	"sort"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +33,7 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 
 		actual, err := uds.Assignments()
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, expected, actual)
 		}
 	})
@@ -65,6 +68,7 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 
 		actual, err := uds.Assignments()
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, expected, actual)
 		}
 	})
@@ -91,6 +95,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 
 		actual, err := uds.topicAssignments(topic)
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, actual, expected)
 		}
 	})
@@ -114,6 +119,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 
 		actual, err := uds.topicAssignments(topic)
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, expected, actual)
 		}
 	})
@@ -137,6 +143,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 
 		actual, err := uds.topicAssignments(topic)
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, expected, actual)
 		}
 	})
@@ -160,6 +167,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 
 		actual, err := uds.topicAssignments(topic)
 		if assert.NoError(t, err) {
+			sort.Sort(byPartitionInPartitionReplicas(expected))
 			assert.EqualValues(t, expected, actual)
 		}
 	})

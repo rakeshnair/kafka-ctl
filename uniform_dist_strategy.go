@@ -50,6 +50,7 @@ func (uds *UniformDistStrategy) Assignments() ([]PartitionReplicas, error) {
 		}
 		prs = append(prs, tprs...)
 	}
+	sort.Sort(byPartitionInPartitionReplicas(prs))
 	return prs, nil
 }
 
@@ -151,6 +152,7 @@ func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionR
 			Replicas:  bids.GetAll(),
 		})
 	}
+	sort.Sort(byPartitionInPartitionReplicas(prs))
 	return prs
 }
 
@@ -232,10 +234,14 @@ func split(grp []BrokerID) (BrokerID, []BrokerID) { return grp[0], grp[1:] }
 
 func randomStartIndex(max int) int { return rand.Intn(max) }
 
-func collectBrokerIDs(brokers []Broker) []BrokerID {
-	var ids []BrokerID
-	for _, broker := range brokers {
-		ids = append(ids, broker.Id)
-	}
-	return ids
+type byPartitionInPartitionReplicas []PartitionReplicas
+
+func (p byPartitionInPartitionReplicas) Len() int {
+	return len(p)
+}
+func (p byPartitionInPartitionReplicas) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+func (p byPartitionInPartitionReplicas) Less(i, j int) bool {
+	return p[i].Partition < p[j].Partition
 }
