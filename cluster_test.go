@@ -23,7 +23,9 @@ func TestCluster_ID(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(indexedScenario(i), func(t *testing.T) {
-			defer testZkConn(t).Delete(ClusterIdPath, -1)
+			defer func() {
+				removeBrokerNode(t)
+			}()
 
 			c := testCluster(t)
 			err := c.store.Set(ClusterIdPath, test.data)
@@ -70,8 +72,7 @@ func TestCluster_Controller(t *testing.T) {
 	for i, test := range tests {
 		t.Run(indexedScenario(i), func(t *testing.T) {
 			defer func() {
-				testZkConn(t).Delete(ControllerPath, -1)
-				testZkConn(t).Delete(fmt.Sprintf("%s/%d", BrokerIdsPath, test.id), -1)
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -118,8 +119,7 @@ func TestCluster_Broker(t *testing.T) {
 	for i, test := range tests {
 		t.Run(indexedScenario(i), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -167,8 +167,7 @@ func TestCluster_Brokers(t *testing.T) {
 	for i, test := range tests {
 		t.Run(indexedScenario(i), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -213,8 +212,7 @@ func TestCluster_Topics(t *testing.T) {
 	for i, test := range tests {
 		t.Run(indexedScenario(i), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -284,8 +282,7 @@ func TestCluster_DescribeTopic(t *testing.T) {
 	for index, test := range tests {
 		t.Run(indexedScenario(index), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -364,8 +361,7 @@ func TestCluster_DescribeAllTopics(t *testing.T) {
 	for index, test := range tests {
 		t.Run(indexedScenario(index), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -444,8 +440,7 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 	for index, test := range tests {
 		t.Run(indexedScenario(index), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -507,8 +502,7 @@ func TestCluster_PartitionDistribution(t *testing.T) {
 	for index, test := range tests {
 		t.Run(indexedScenario(index), func(t *testing.T) {
 			defer func() {
-				store := &ZkClusterStore{conn: testZkConn(t)}
-				store.Remove("/brokers")
+				removeBrokerNode(t)
 			}()
 
 			c := testCluster(t)
@@ -531,4 +525,9 @@ func TestCluster_PartitionDistribution(t *testing.T) {
 
 func testCluster(t *testing.T) *Cluster { return NewCluster(&ZkClusterStore{conn: testZkConn(t)}) }
 
-//func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }
+func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }
+
+func removeBrokerNode(t *testing.T) {
+	store := testStore(t)
+	store.Remove("/brokers")
+}
