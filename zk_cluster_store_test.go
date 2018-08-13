@@ -1,12 +1,9 @@
 package kafkactl
 
 import (
+	"sort"
 	"testing"
 	"time"
-
-	"fmt"
-
-	"sort"
 
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
@@ -25,13 +22,11 @@ func TestZkClusterStore_Set(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		scenario := fmt.Sprintf("scenario_%d", i)
-		t.Run(scenario, func(t *testing.T) {
-			conn, _, err := zk.Connect([]string{localZkEndpoint}, time.Second)
-			exitOnErr(t, err)
-
+		t.Run(indexedScenario(i), func(t *testing.T) {
+			conn := testZkConn(t)
 			store := &ZkClusterStore{conn: conn}
-			err = store.Set(test.inputPath, []byte(test.inputData))
+
+			err := store.Set(test.inputPath, []byte(test.inputData))
 			exitOnErr(t, err)
 
 			actual, _, err := conn.Get(test.inputPath)
@@ -55,13 +50,11 @@ func TestZkClusterStore_Get(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		scenario := fmt.Sprintf("scenario_%d", i)
-		t.Run(scenario, func(t *testing.T) {
-			conn, _, err := zk.Connect([]string{localZkEndpoint}, time.Second)
-			exitOnErr(t, err)
-
+		t.Run(indexedScenario(i), func(t *testing.T) {
+			conn := testZkConn(t)
 			store := &ZkClusterStore{conn: conn}
-			err = store.Set(test.input, []byte(test.seed))
+
+			err := store.Set(test.input, []byte(test.seed))
 			exitOnErr(t, err)
 
 			actual, err := store.Get(test.input)
@@ -84,14 +77,12 @@ func TestZkClusterStore_List(t *testing.T) {
 		{[]string{"/broker"}, "/broker", []string{}},
 	}
 	for i, test := range tests {
-		scenario := fmt.Sprintf("scenario_%d", i)
-		t.Run(scenario, func(t *testing.T) {
-			conn, _, err := zk.Connect([]string{localZkEndpoint}, time.Second)
-			exitOnErr(t, err)
-
+		t.Run(indexedScenario(i), func(t *testing.T) {
+			conn := testZkConn(t)
 			store := &ZkClusterStore{conn: conn}
+
 			for _, p := range test.seed {
-				err = store.Set(p, []byte(""))
+				err := store.Set(p, []byte(""))
 				exitOnErr(t, err)
 			}
 
@@ -107,9 +98,8 @@ func TestZkClusterStore_List(t *testing.T) {
 	}
 }
 
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Error("unexpected error", err)
-		t.FailNow()
-	}
+func testZkConn(t *testing.T) *zk.Conn {
+	conn, _, err := zk.Connect([]string{localZkEndpoint}, time.Second)
+	exitOnErr(t, err)
+	return conn
 }

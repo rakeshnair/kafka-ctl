@@ -11,6 +11,8 @@ import (
 	"sort"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
+	"github.com/samuel/go-zookeeper/zk"
 	"github.com/segmentio/objconv/json"
 )
 
@@ -23,6 +25,9 @@ var (
 	PartitionPathTemplate     = "/brokers/topics/{topic}/partitions/{partition}/state"
 	PartitionReassignmentPath = "/admin/reassign_partitions"
 )
+
+// ErrNoTopic is thrown when we try to get replicas for a non existent topic
+var ErrNoTopic = errors.New("topic does not exist")
 
 // Cluster provides a client to interact with a Kafka cluster
 type Cluster struct {
@@ -158,7 +163,12 @@ func (c *Cluster) Broker(id BrokerID) (Broker, error) {
 func (c *Cluster) Topics() ([]string, error) {
 	tps, err := c.store.List(TopicPath)
 	if err != nil {
-		return []string{}, err
+		switch err {
+		case zk.ErrNoNode:
+			return []string{}, nil
+		default:
+			return []string{}, err
+		}
 	}
 	var topics []string
 	for _, tp := range tps {
@@ -176,6 +186,10 @@ func (c *Cluster) topicReplicas(name string) (map[int64][]BrokerID, error) {
 	path := fmt.Sprintf("%s/%s", TopicPath, name)
 	data, err := c.store.Get(path)
 	if err != nil {
+		switch {
+		case err == zk.ErrNoNode:
+			err = ErrNoTopic
+		}
 		return map[int64][]BrokerID{}, err
 	}
 	var r replicas

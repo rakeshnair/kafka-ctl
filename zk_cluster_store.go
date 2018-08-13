@@ -7,6 +7,8 @@ import (
 
 	"sort"
 
+	"fmt"
+
 	"github.com/samuel/go-zookeeper/zk"
 )
 
@@ -62,7 +64,7 @@ func (zks *ZkClusterStore) Set(path string, data []byte) error {
 	}
 
 	// Path does not exist. Ensure all the parent nodes are created
-	err = zks.buildPrefix(prefix(path))
+	err = zks.buildPrefixes(prefix(path))
 	if err != nil {
 		return err
 	}
@@ -78,7 +80,48 @@ func (zks *ZkClusterStore) Close() error {
 	return nil
 }
 
-func (zks *ZkClusterStore) buildPrefix(path string) error {
+// Remove deletes the node referenced by the input path and all the child nodes under it
+func (zks *ZkClusterStore) Remove(path string) error {
+	exists, _, err := zks.conn.Exists(path)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+
+	err = zks.conn.Delete(path, -1)
+	if err != nil {
+		switch err {
+		case zk.ErrNotEmpty:
+			ids, err := zks.List(path)
+			if err != nil {
+				return err
+			}
+
+			// delete all the child nodes
+			for _, id := range ids {
+				path := fmt.Sprintf("%s/%s", path, id)
+				err := zks.Remove(path)
+				if err != nil {
+					return err
+				}
+			}
+
+			// attempt deleting the current node again after all the child
+			// nodes have been deleted
+			err = zks.conn.Delete(path, -1)
+			if err != nil {
+				return err
+			}
+		default:
+			return err
+		}
+	}
+	return nil
+}
+
+func (zks *ZkClusterStore) buildPrefixes(path string) error {
 	if len(path) == 0 {
 		return nil
 	}
@@ -91,7 +134,7 @@ func (zks *ZkClusterStore) buildPrefix(path string) error {
 		return nil
 	}
 
-	err = zks.buildPrefix(prefix(path))
+	err = zks.buildPrefixes(prefix(path))
 	if err != nil {
 		return err
 	}
