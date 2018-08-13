@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -465,6 +466,69 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 	}
 }
 
+func TestCluster_PartitionDistribution(t *testing.T) {
+	type kv struct{ k, v string }
+	tests := []struct {
+		input    string
+		seed     []kv
+		expected []TopicBrokerDistribution
+		err      error
+	}{
+		{
+			input: "kafka-topic-1",
+			seed: []kv{
+				{k: "/brokers/ids/1", v: "{\"endpoints\":[\"PLAINTEXT://localhost:19092\"],\"rack\":\"1\",\"jmx_port\":-1,\"host\":\"localhost\",\"timestamp\":\"1534034254933\",\"port\":19092,\"version\":4}"},
+				{k: "/brokers/ids/2", v: "{\"endpoints\":[\"PLAINTEXT://localhost:29092\"],\"rack\":\"1\",\"jmx_port\":-1,\"host\":\"localhost\",\"timestamp\":\"1534034254933\",\"port\":29092,\"version\":4}"},
+				{k: "/brokers/topics/kafka-topic-1", v: "{\"version\":1,\"partitions\":{\"2\":[2,1],\"1\":[1,2],\"0\":[2,1]}}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/1/state", v: "{\"controller_epoch\":49,\"leader\":1,\"version\":1,\"leader_epoch\":0,\"isr\":[1,2]}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
+			},
+			expected: []TopicBrokerDistribution{
+				{"kafka-topic-1", 1, []int64{1}, []int64{0, 2}},
+				{"kafka-topic-1", 2, []int64{0, 2}, []int64{1}},
+			},
+		},
+		{
+			input: "kafka-topic-1",
+			seed: []kv{
+				{k: "/brokers/ids/1", v: "{\"endpoints\":[\"PLAINTEXT://localhost:19092\"],\"rack\":\"1\",\"jmx_port\":-1,\"host\":\"localhost\",\"timestamp\":\"1534034254933\",\"port\":19092,\"version\":4}"},
+				{k: "/brokers/ids/2", v: "{\"endpoints\":[\"PLAINTEXT://localhost:29092\"],\"rack\":\"1\",\"jmx_port\":-1,\"host\":\"localhost\",\"timestamp\":\"1534034254933\",\"port\":29092,\"version\":4}"},
+			},
+			err: ErrNoTopic,
+		},
+		{
+			input: "kafka-topic-1",
+			seed:  []kv{},
+			err:   zk.ErrNoNode,
+		},
+	}
+
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+			defer func() {
+				store := &ZkClusterStore{conn: testZkConn(t)}
+				store.Remove("/brokers")
+			}()
+
+			c := testCluster(t)
+
+			for _, input := range test.seed {
+				c.store.Set(input.k, []byte(input.v))
+			}
+
+			actual, err := c.PartitionDistribution(test.input)
+			if test.err != nil {
+				assert.Equal(t, test.err, err)
+				return
+			}
+
+			exitOnErr(t, err)
+			assert.EqualValues(t, test.expected, actual)
+		})
+	}
+}
+
 func testCluster(t *testing.T) *Cluster { return NewCluster(&ZkClusterStore{conn: testZkConn(t)}) }
 
-func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }
+//func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }

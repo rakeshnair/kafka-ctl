@@ -53,6 +53,11 @@ type TopicPartition struct {
 	Partition int64  `json:"partition"`
 }
 
+// String returns the string representation of a TopicPartition object
+func (tp TopicPartition) String() string {
+	return fmt.Sprintf("%s-%d", tp.Topic, tp.Partition)
+}
+
 // TopicPartitionInfo wraps all metadata information for a single Kafka partition
 type TopicPartitionInfo struct {
 	TopicPartition
@@ -351,6 +356,22 @@ func PrettyPrintPartitionDistribution(pds []TopicBrokerDistribution) {
 	tw.Render()
 }
 
+func PrettyPrintTopicPartitionInfo(tps []TopicPartitionInfo) {
+	tw := tablewriter.NewWriter(os.Stdout)
+	tw.SetHeader([]string{"Partition", "Replicas", "ISRs"})
+
+	for _, tp := range tps {
+		var row []string
+		row = append(row, fmt.Sprintf("%s", tp.TopicPartition))
+		row = append(row, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(tp.Replicas)), ","), "[]"))
+		row = append(row, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(tp.ISR)), ","), "[]"))
+		tw.Append(row)
+	}
+
+	tw.Render()
+}
+
+// PartitionReassignRequest generates a ReassignmentReq from the input list of PartitionReplicas
 func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
 	return ReassignmentReq{
 		Version:    1,
@@ -358,6 +379,7 @@ func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) Reass
 	}
 }
 
+// ReassignPartitions triggers partition reassignment by creating the relevant cluster store nodes
 func (c *Cluster) ReassignPartitions(req ReassignmentReq) error {
 	data, err := json.Marshal(req)
 	if err != nil {
@@ -366,6 +388,8 @@ func (c *Cluster) ReassignPartitions(req ReassignmentReq) error {
 	err = c.store.Set(PartitionReassignmentPath, data)
 	return err
 }
+
+// -- helper methods
 
 type Int64List struct {
 	entries []int64
