@@ -70,3 +70,79 @@ func TestStrategy_mergeN(t *testing.T) {
 		assert.EqualValues(t, test.expected, actual)
 	}
 }
+
+func TestStrategy_PartitionReplicasDiff(t *testing.T) {
+	tests := []struct {
+		old      []PartitionReplicas
+		new      []PartitionReplicas
+		expected []PartitionReplicas
+	}{
+		{
+			old: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
+			},
+			new: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
+			},
+			expected: []PartitionReplicas{},
+		},
+		{
+			old: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
+			},
+			new: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
+			},
+			expected: []PartitionReplicas{
+				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
+			},
+		},
+		{
+			old: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+			},
+			new: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
+			},
+			expected: []PartitionReplicas{
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
+			},
+		},
+		{
+			old: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
+			},
+			new: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+			},
+			expected: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
+			},
+		},
+	}
+
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+			actual := PartitionReplicasDiff(test.old, test.new)
+			if len(test.expected) == 0 {
+				assert.True(t, (len(actual) == 0))
+				return
+			}
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}

@@ -3,6 +3,7 @@ package kafkactl
 import (
 	"errors"
 	"math/rand"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -17,6 +18,32 @@ var ErrTopicsMissing = errors.New("topics missing for strategy")
 // Strategy is the interface that exposes method to implement a partition distribution
 type Strategy interface {
 	Assignments() ([]PartitionReplicas, error)
+}
+
+// PartitionReplicasDiff returns the difference between two sets of PartitionReplica slices
+func PartitionReplicasDiff(old []PartitionReplicas, new []PartitionReplicas) []PartitionReplicas {
+	var diff []PartitionReplicas
+	mp := map[TopicPartition][]BrokerID{}
+	for _, pr := range old {
+		mp[TopicPartition{Topic: pr.Topic, Partition: pr.Partition}] = pr.Replicas
+	}
+
+	for _, pr := range new {
+		tp := TopicPartition{Topic: pr.Topic, Partition: pr.Partition}
+		replicas, exists := mp[tp]
+		if !exists {
+			diff = append(diff, pr)
+			continue
+		}
+
+		if !reflect.DeepEqual(replicas, pr.Replicas) {
+
+			diff = append(diff, pr)
+		}
+	}
+
+	sort.Sort(byPartitionInPartitionReplicas(diff))
+	return diff
 }
 
 func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionReplicas {
