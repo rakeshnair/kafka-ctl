@@ -26,9 +26,9 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}, {Id: 3, Rack: "2"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2, Leader: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2, Leader: 3},
 			}, nil)
 
 		actual, err := uds.Assignments()
@@ -56,14 +56,14 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}, {Id: 3, Rack: "2"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2, Leader: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2, Leader: 3},
 			}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-2").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-2", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-2", Partition: 1}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-2", Partition: 0}, Replication: 2, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-2", Partition: 1}, Replication: 2, Leader: 2},
 			}, nil)
 
 		actual, err := uds.Assignments()
@@ -75,7 +75,6 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 }
 
 func TestUniformDistStrategy_topicAssignments(t *testing.T) {
-	defer func() { randomStartIndexFn = randomStartIndex }()
 
 	t.Run("no_rack_2_node_cluster", func(t *testing.T) {
 		topic := "kafka-test-1"
@@ -85,12 +84,11 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		uds := &UniformDistStrategy{
 			cluster: mockCluster,
 		}
-		randomStartIndexFn = func(max int) int { return 0 }
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2, Leader: 2},
 			}, nil)
 
 		actual, err := uds.topicAssignments(topic)
@@ -108,13 +106,12 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		uds := &UniformDistStrategy{
 			cluster: mockCluster,
 		}
-		randomStartIndexFn = func(max int) int { return 0 }
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}, {Id: 3, Rack: "2"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2, Leader: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2, Leader: 3},
 			}, nil)
 
 		actual, err := uds.topicAssignments(topic)
@@ -132,13 +129,12 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		uds := &UniformDistStrategy{
 			cluster: mockCluster,
 		}
-		randomStartIndexFn = func(max int) int { return 1 }
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}, {Id: 3, Rack: "2"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 2, Leader: 3},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 2, Leader: 2},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 2, Leader: 1},
 			}, nil)
 
 		actual, err := uds.topicAssignments(topic)
@@ -156,13 +152,12 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		uds := &UniformDistStrategy{
 			cluster: mockCluster,
 		}
-		randomStartIndexFn = func(max int) int { return 0 }
 		mockCluster.On("Brokers").Return([]Broker{{Id: 1, Rack: "1"}, {Id: 2, Rack: "1"}, {Id: 3, Rack: "2"}}, nil)
 		mockCluster.On("DescribeTopic", "kafka-test-1").Return(
 			[]TopicPartitionInfo{
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 3},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 3},
-				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 3},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 0}, Replication: 3, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 1}, Replication: 3, Leader: 1},
+				{TopicPartition: TopicPartition{Topic: "kafka-test-1", Partition: 2}, Replication: 3, Leader: 1},
 			}, nil)
 
 		actual, err := uds.topicAssignments(topic)

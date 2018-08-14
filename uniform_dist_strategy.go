@@ -86,8 +86,16 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 	// Set of all BrokerIDs available for serving partitions
 	bidSet := buildBrokerIDSet(brokers, isRackAware)
 
-	// pick a random broker to start assigning partitions
-	startIndex := randomStartIndexFn(bidSet.Size())
+	// pick a broker based on the existing allocation
+	startBroker, err := tps[0].Leader, nil
+	if err != nil {
+		return []PartitionReplicas{}, err
+	}
+
+	startIndex, err := bidSet.IndexOf(startBroker)
+	if err != nil {
+		return []PartitionReplicas{}, err
+	}
 
 	// Mapping between a specific partition and the bidSet holding a replica
 	tpBrokerMap := map[TopicPartition]*BrokerIDTreeSet{}

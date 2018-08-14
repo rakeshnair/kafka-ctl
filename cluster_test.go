@@ -25,6 +25,7 @@ func TestCluster_ID(t *testing.T) {
 		t.Run(indexedScenario(i), func(t *testing.T) {
 			defer func() {
 				removeBrokerNode(t)
+
 			}()
 
 			c := testCluster(t)
@@ -594,4 +595,5 @@ func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: test
 func removeBrokerNode(t *testing.T) {
 	store := testStore(t)
 	store.Remove("/brokers")
+	store.Close()
 }

@@ -84,6 +84,26 @@ func TestBrokerIDTreeSet_Size(t *testing.T) {
 	}
 }
 
+func TestBrokerIDTreeSet_IndexOf(t *testing.T) {
+	tests := []struct {
+		seed     []BrokerID
+		input    BrokerID
+		expected int
+		err      error
+	}{
+		{[]BrokerID{1, 2, 3}, 2, 1, nil},
+		{[]BrokerID{1, 2, 3}, 4, -1, ErrBrokerIDNotFound},
+		{[]BrokerID{}, 1, -1, ErrBrokerIDNotFound},
+	}
+	for _, test := range tests {
+		set := NewBrokerIDSet()
+		fillSet(set, test.seed)
+		actual, err := set.IndexOf(test.input)
+		assert.Equal(t, test.err, err)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
 func fillSet(set *BrokerIDTreeSet, items []BrokerID) {
 	for _, item := range items {
 		set.entryMap[item] = true

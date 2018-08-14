@@ -200,6 +200,29 @@ func (_m *MockClusterAPI) PartitionReassignRequest(partitions []PartitionReplica
 	return r0
 }
 
+// PartitionReplicaDistribution provides a mock function with given fields: topic
+func (_m *MockClusterAPI) PartitionReplicaDistribution(topic string) ([]PartitionReplicas, error) {
+	ret := _m.Called(topic)
+
+	var r0 []PartitionReplicas
+	if rf, ok := ret.Get(0).(func(string) []PartitionReplicas); ok {
+		r0 = rf(topic)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]PartitionReplicas)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(topic)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ReassignPartitions provides a mock function with given fields: req
 func (_m *MockClusterAPI) ReassignPartitions(req ReassignmentReq) error {
 	ret := _m.Called(req)
