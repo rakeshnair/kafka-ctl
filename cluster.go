@@ -371,6 +371,23 @@ func PrettyPrintTopicPartitionInfo(tps []TopicPartitionInfo) {
 	tw.Render()
 }
 
+// PartitionReplicaDistribution is a helper function that trims the result of a DescribeTopic and
+// returns a slice of PartitionReplica objects from it
+func (c *Cluster) PartitionReplicaDistribution(topic string) ([]PartitionReplicas, error) {
+	tps, err := c.DescribeTopic(topic)
+	if err != nil {
+		return []PartitionReplicas{}, err
+	}
+
+	var prs []PartitionReplicas
+	for _, tp := range tps {
+		prs = append(prs, PartitionReplicas{Topic: tp.Topic, Partition: tp.Partition, Replicas: tp.Replicas})
+	}
+
+	sort.Sort(byPartitionInPartitionReplicas(prs))
+	return prs, nil
+}
+
 // PartitionReassignRequest generates a ReassignmentReq from the input list of PartitionReplicas
 func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
 	return ReassignmentReq{

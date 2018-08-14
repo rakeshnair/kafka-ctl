@@ -523,6 +523,70 @@ func TestCluster_PartitionDistribution(t *testing.T) {
 	}
 }
 
+func TestCluster_PartitionReplicaDistribution(t *testing.T) {
+	type kv struct{ k, v string }
+	tests := []struct {
+		input    string
+		seed     []kv
+		expected []PartitionReplicas
+		err      error
+	}{
+		{
+			input: "kafka-topic-1",
+			seed: []kv{
+				{k: "/brokers/topics/kafka-topic-1", v: "{\"version\":1,\"partitions\":{\"2\":[2,1],\"1\":[1,2],\"0\":[2,1]}}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/1/state", v: "{\"controller_epoch\":49,\"leader\":1,\"version\":1,\"leader_epoch\":0,\"isr\":[1,2]}"},
+				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
+			},
+			expected: []PartitionReplicas{
+				{"kafka-topic-1", 0, []BrokerID{2, 1}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2}},
+				{"kafka-topic-1", 2, []BrokerID{2, 1}},
+			},
+		},
+		{
+			input: "kafka-topic-2",
+			seed: []kv{
+				{k: "/brokers/topics/kafka-topic-2", v: "{\"version\":1,\"partitions\":{\"0\":[2,1]}}"},
+				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
+			},
+			expected: []PartitionReplicas{
+				{"kafka-topic-2", 0, []BrokerID{2, 1}},
+			},
+		},
+		{
+			input: "kafka-topic-3",
+			seed:  []kv{},
+			err:   ErrNoTopic,
+		},
+	}
+
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+			defer func() {
+				removeBrokerNode(t)
+			}()
+
+			c := testCluster(t)
+
+			for _, input := range test.seed {
+				c.store.Set(input.k, []byte(input.v))
+			}
+
+			actual, err := c.PartitionReplicaDistribution(test.input)
+
+			if test.err == nil {
+				exitOnErr(t, err)
+				assert.EqualValues(t, test.expected, actual)
+				return
+			}
+
+			assert.Equal(t, test.err, err)
+		})
+	}
+}
+
 func testCluster(t *testing.T) *Cluster { return NewCluster(&ZkClusterStore{conn: testZkConn(t)}) }
 
 func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }

@@ -1,20 +1,10 @@
 package kafkactl
 
 import (
-	"time"
-
-	"math/rand"
-
 	"sort"
 
 	"github.com/pkg/errors"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
-
-var randomStartIndexFn = randomStartIndex
 
 // UniformDistStrategyConfigs wraps the list of configs required to initialize a UniformDistStrategy object
 type UniformDistStrategyConfigs struct {
@@ -26,18 +16,20 @@ type UniformDistStrategyConfigs struct {
 // UniformDistStrategy implements a Strategy that uniformly distributes all topic partitions among available brokers
 type UniformDistStrategy struct {
 	cluster   ClusterAPI
-	name      string
 	topics    []string
 	brokerIDs []BrokerID
 }
 
 // NewUniformDistStrategy returns a new instance of UniformDistStrategy
-func NewUniformDistStrategy(configs UniformDistStrategyConfigs) *UniformDistStrategy {
+func NewUniformDistStrategy(configs UniformDistStrategyConfigs) (*UniformDistStrategy, error) {
+	if len(configs.Topics) == 0 {
+		return nil, ErrTopicsMissing
+	}
 	return &UniformDistStrategy{
 		cluster:   configs.Cluster,
 		topics:    configs.Topics,
 		brokerIDs: configs.Brokers,
-	}
+	}, nil
 }
 
 // Assignments returns a distribution where partitions are uniformly distributed among brokers
@@ -141,107 +133,4 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 	}
 
 	return toPartitionReplicas(tpBrokerMap), nil
-}
-
-func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionReplicas {
-	var prs []PartitionReplicas
-	for tp, bids := range tpMap {
-		prs = append(prs, PartitionReplicas{
-			Topic:     tp.Topic,
-			Partition: tp.Partition,
-			Replicas:  bids.GetAll(),
-		})
-	}
-	sort.Sort(byPartitionInPartitionReplicas(prs))
-	return prs
-}
-
-func buildBrokerIDSet(brokers []Broker, isRackAware bool) *BrokerIDTreeSet {
-	bset := NewBrokerIDSet()
-
-	if isRackAware {
-		rackmap := map[string]*[]BrokerID{}
-		for _, b := range brokers {
-			if _, ok := rackmap[b.Rack]; !ok {
-				rackmap[b.Rack] = &[]BrokerID{}
-			}
-			ids := rackmap[b.Rack]
-			*ids = append(*ids, b.Id)
-		}
-
-		// gather rack names so that they can be sorted
-		var racks []string
-		for rack := range rackmap {
-			racks = append(racks, rack)
-		}
-		sort.Strings(racks)
-
-		var idsGrps [][]BrokerID
-		for _, rack := range racks {
-			idsGrps = append(idsGrps, *rackmap[rack])
-		}
-
-		for _, id := range mergeN(idsGrps...) {
-			bset.Add(id)
-		}
-
-		return bset
-	}
-
-	// handle case where rack awareness not enabled
-	for _, b := range brokers {
-		bset.Add(b.Id)
-	}
-	return bset
-}
-
-// mergeN takes N BrokerID slice and flattens them into a single
-// slice by ensuring that elements in the same index are grouped
-// together
-//
-// for eg: mergeN({1, 2}, {3}, {4, 5, 6}, {7, 8})
-// will yield {1,3,4,7,2,5,8,6}
-func mergeN(groups ...[]BrokerID) []BrokerID {
-	var res []BrokerID
-	for {
-		out, candidate := merge(groups)
-		res = append(res, out...)
-		if len(candidate) == 0 {
-			break
-		}
-		groups = candidate
-	}
-	return res
-}
-
-func merge(groups [][]BrokerID) ([]BrokerID, [][]BrokerID) {
-	var out []BrokerID
-	var candidates [][]BrokerID
-	for _, grp := range groups {
-		if len(grp) == 0 {
-			continue
-		}
-		item, ngrp := split(grp)
-		out = append(out, item)
-		candidates = append(candidates, ngrp)
-	}
-	return out, candidates
-}
-
-// Note: split does not check for empty slices as input
-// Ensure its checked before invoking split
-func split(grp []BrokerID) (BrokerID, []BrokerID) { return grp[0], grp[1:] }
-
-func randomStartIndex(max int) int { return rand.Intn(max) }
-
-type byPartitionInPartitionReplicas []PartitionReplicas
-
-func (p byPartitionInPartitionReplicas) Len() int {
-	return len(p)
-}
-func (p byPartitionInPartitionReplicas) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-func (p byPartitionInPartitionReplicas) Less(i, j int) bool {
-	return p[i].Partition < p[j].Partition
 }
