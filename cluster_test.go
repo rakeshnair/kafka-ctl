@@ -258,9 +258,9 @@ func TestCluster_DescribeTopic(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-1", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-1", 1}, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
-				{TopicPartition{"kafka-topic-1", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 1, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
+				{"kafka-topic-1", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -270,7 +270,7 @@ func TestCluster_DescribeTopic(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-2", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -319,9 +319,9 @@ func TestCluster_DescribeAllTopics(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-1", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-1", 1}, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
-				{TopicPartition{"kafka-topic-1", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 1, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
+				{"kafka-topic-1", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -336,12 +336,12 @@ func TestCluster_DescribeAllTopics(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-1", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-1", 1}, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
-				{TopicPartition{"kafka-topic-1", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-2", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-2", 1}, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
-				{TopicPartition{"kafka-topic-2", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 1, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
+				{"kafka-topic-1", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 1, 2, 1, []BrokerID{1, 2}, []BrokerID{1, 2}},
+				{"kafka-topic-2", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -350,7 +350,7 @@ func TestCluster_DescribeAllTopics(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-2", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -399,8 +399,8 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-1", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-1", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -416,10 +416,10 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-1", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-1", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-2", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
-				{TopicPartition{"kafka-topic-2", 2}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-1", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 2, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -429,7 +429,7 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
 			expected: []TopicPartitionInfo{
-				{TopicPartition{"kafka-topic-2", 0}, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
+				{"kafka-topic-2", 0, 2, 2, []BrokerID{2, 1}, []BrokerID{2, 1}},
 			},
 		},
 		{
@@ -512,7 +512,7 @@ func TestCluster_PartitionDistribution(t *testing.T) {
 				c.store.Set(input.k, []byte(input.v))
 			}
 
-			actual, err := c.PartitionDistribution(test.input)
+			actual, err := c.CurrentTopicBrokerDistribution(test.input)
 			if test.err != nil {
 				assert.Equal(t, test.err, err)
 				return
@@ -529,7 +529,7 @@ func TestCluster_PartitionReplicaDistribution(t *testing.T) {
 	tests := []struct {
 		input    string
 		seed     []kv
-		expected []PartitionReplicas
+		expected []PartitionDistribution
 		err      error
 	}{
 		{
@@ -540,7 +540,7 @@ func TestCluster_PartitionReplicaDistribution(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-1/partitions/1/state", v: "{\"controller_epoch\":49,\"leader\":1,\"version\":1,\"leader_epoch\":0,\"isr\":[1,2]}"},
 				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
-			expected: []PartitionReplicas{
+			expected: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1}},
@@ -552,7 +552,7 @@ func TestCluster_PartitionReplicaDistribution(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2", v: "{\"version\":1,\"partitions\":{\"0\":[2,1]}}"},
 				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
-			expected: []PartitionReplicas{
+			expected: []PartitionDistribution{
 				{"kafka-topic-2", 0, []BrokerID{2, 1}},
 			},
 		},
@@ -575,7 +575,7 @@ func TestCluster_PartitionReplicaDistribution(t *testing.T) {
 				c.store.Set(input.k, []byte(input.v))
 			}
 
-			actual, err := c.PartitionReplicaDistribution(test.input)
+			actual, err := c.CurrentPartitionDistribution(test.input)
 
 			if test.err == nil {
 				exitOnErr(t, err)

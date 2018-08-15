@@ -7,18 +7,18 @@ import (
 )
 
 func TestStrategy_toPartitionReplicas(t *testing.T) {
-	input := map[TopicPartition]*BrokerIDTreeSet{}
-	input[TopicPartition{"topic1", 0}] = func() *BrokerIDTreeSet {
+	input := map[topicPartition]*BrokerIDTreeSet{}
+	input[topicPartition{"topic1", 0}] = func() *BrokerIDTreeSet {
 		set := NewBrokerIDSet()
 		set.entries = []BrokerID{1, 3, 4, 5}
 		return set
 	}()
-	input[TopicPartition{"topic2", 1}] = func() *BrokerIDTreeSet {
+	input[topicPartition{"topic2", 1}] = func() *BrokerIDTreeSet {
 		set := NewBrokerIDSet()
 		set.entries = []BrokerID{3, 4}
 		return set
 	}()
-	expected := []PartitionReplicas{
+	expected := []PartitionDistribution{
 		{"topic1", 0, []BrokerID{1, 3, 4, 5}},
 		{"topic2", 1, []BrokerID{3, 4}},
 	}
@@ -73,61 +73,61 @@ func TestStrategy_mergeN(t *testing.T) {
 
 func TestStrategy_PartitionReplicasDiff(t *testing.T) {
 	tests := []struct {
-		old      []PartitionReplicas
-		new      []PartitionReplicas
-		expected []PartitionReplicas
+		old      []PartitionDistribution
+		new      []PartitionDistribution
+		expected []PartitionDistribution
 	}{
 		{
-			old: []PartitionReplicas{
+			old: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			new: []PartitionReplicas{
+			new: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			expected: []PartitionReplicas{},
+			expected: []PartitionDistribution{},
 		},
 		{
-			old: []PartitionReplicas{
+			old: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			new: []PartitionReplicas{
+			new: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
-			expected: []PartitionReplicas{
+			expected: []PartitionDistribution{
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
 		},
 		{
-			old: []PartitionReplicas{
+			old: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 			},
-			new: []PartitionReplicas{
+			new: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
-			expected: []PartitionReplicas{
+			expected: []PartitionDistribution{
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
 		},
 		{
-			old: []PartitionReplicas{
+			old: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 			},
-			new: []PartitionReplicas{
+			new: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 			},
-			expected: []PartitionReplicas{
+			expected: []PartitionDistribution{
 				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 			},
@@ -143,6 +143,59 @@ func TestStrategy_PartitionReplicasDiff(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestStrategy_groupByTopic(t *testing.T) {
+	tests := []struct {
+		input    []TopicPartitionInfo
+		expected map[string][]TopicPartitionInfo
+	}{
+		{
+			input: []TopicPartitionInfo{
+				{Topic: "kafka-test-1", Partition: 0, Replication: 2, Leader: 3},
+				{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 2},
+				{Topic: "kafka-test-1", Partition: 2, Replication: 2, Leader: 1},
+				{Topic: "kafka-test-2", Partition: 0, Replication: 2, Leader: 1},
+				{Topic: "kafka-test-2", Partition: 1, Replication: 2, Leader: 2},
+			},
+			expected: map[string][]TopicPartitionInfo{
+				"kafka-test-1": []TopicPartitionInfo{
+					{Topic: "kafka-test-1", Partition: 0, Replication: 2, Leader: 3},
+					{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 2},
+					{Topic: "kafka-test-1", Partition: 2, Replication: 2, Leader: 1},
+				},
+				"kafka-test-2": []TopicPartitionInfo{
+					{Topic: "kafka-test-2", Partition: 0, Replication: 2, Leader: 1},
+					{Topic: "kafka-test-2", Partition: 1, Replication: 2, Leader: 2},
+				},
+			},
+		},
+		{
+			input: []TopicPartitionInfo{
+				{Topic: "kafka-test-1", Partition: 0, Replication: 2, Leader: 3},
+				{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 2},
+				{Topic: "kafka-test-1", Partition: 2, Replication: 2, Leader: 1},
+			},
+			expected: map[string][]TopicPartitionInfo{
+				"kafka-test-1": []TopicPartitionInfo{
+					{Topic: "kafka-test-1", Partition: 0, Replication: 2, Leader: 3},
+					{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 2},
+					{Topic: "kafka-test-1", Partition: 2, Replication: 2, Leader: 1},
+				},
+			},
+		},
+		{
+			input:    []TopicPartitionInfo{},
+			expected: map[string][]TopicPartitionInfo{},
+		},
+	}
+
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+			actual := groupByTopic(test.input)
+			assert.EqualValues(t, test.expected, actual)
 		})
 	}
 }

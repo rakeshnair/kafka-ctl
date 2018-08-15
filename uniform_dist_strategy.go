@@ -1,112 +1,78 @@
 package kafkactl
 
 import (
+	"errors"
 	"sort"
-
-	"github.com/pkg/errors"
 )
 
-// UniformDistStrategyConfigs wraps the list of configs required to initialize a UniformDistStrategy object
-type UniformDistStrategyConfigs struct {
-	Cluster ClusterAPI `json:"cluster"`
-	Topics  []string   `json:"topics"`
-	Brokers []BrokerID `json:"brokerIDs"`
-}
-
 // UniformDistStrategy implements a Strategy that uniformly distributes all topic partitions among available brokers
-type UniformDistStrategy struct {
-	cluster   ClusterAPI
-	topics    []string
-	brokerIDs []BrokerID
-}
+type UniformDistStrategy struct{}
 
 // NewUniformDistStrategy returns a new instance of UniformDistStrategy
-func NewUniformDistStrategy(configs UniformDistStrategyConfigs) (*UniformDistStrategy, error) {
-	if len(configs.Topics) == 0 {
-		return nil, ErrTopicsMissing
-	}
-	return &UniformDistStrategy{
-		cluster:   configs.Cluster,
-		topics:    configs.Topics,
-		brokerIDs: configs.Brokers,
-	}, nil
-}
+func NewUniformDistStrategy() *UniformDistStrategy { return &UniformDistStrategy{} }
+
+// ErrEmptyPartitions is thrown when we try to perform a rebalancing by providing an empty list of partitions
+var ErrEmptyPartitions = errors.New("partition list for rebalancing is empty")
 
 // Assignments returns a distribution where partitions are uniformly distributed among brokers
-func (uds *UniformDistStrategy) Assignments() ([]PartitionReplicas, error) {
-	var prs []PartitionReplicas
-	for _, topic := range uds.topics {
-		tprs, err := uds.topicAssignments(topic)
+func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
+	if len(configs.TopicPartitions) == 0 {
+		return []PartitionDistribution{}, ErrEmptyPartitions
+	}
+
+	brokers := configs.Brokers
+	groupedTps := groupByTopic(configs.TopicPartitions)
+
+	var topics []string
+	for topic, _ := range groupedTps {
+		topics = append(topics, topic)
+	}
+
+	sort.Strings(topics)
+
+	var prs []PartitionDistribution
+	for _, topic := range topics {
+		tprs, err := uds.generateAssignments(topic, brokers, groupedTps[topic])
 		if err != nil {
-			return []PartitionReplicas{}, err
+			return []PartitionDistribution{}, err
 		}
+		sort.Sort(byPartitionInPartitionReplicas(tprs))
 		prs = append(prs, tprs...)
 	}
-	sort.Sort(byPartitionInPartitionReplicas(prs))
+
 	return prs, nil
 }
 
-func (uds *UniformDistStrategy) brokers(ids ...BrokerID) ([]Broker, error) {
-	if len(ids) == 0 {
-		return uds.cluster.Brokers()
-	}
-	var brokers []Broker
-	for _, id := range ids {
-		broker, err := uds.cluster.Broker(id)
-		if err != nil {
-			return []Broker{}, err
-		}
-		brokers = append(brokers, broker)
-	}
-	return brokers, nil
-}
-
-func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionReplicas, error) {
-	brokers, err := uds.brokers(uds.brokerIDs...)
-	if err != nil {
-		return []PartitionReplicas{}, err
-	}
-
+func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Broker, partitions []TopicPartitionInfo) ([]PartitionDistribution, error) {
+	// Check if rack awareness need to be considered
 	isRackAware := true
 	for _, broker := range brokers {
 		isRackAware = isRackAware && (len(broker.Rack) > 0)
 	}
 
-	tps, err := uds.cluster.DescribeTopic(topic)
-	if err != nil {
-		return []PartitionReplicas{}, err
-	}
-
-	if len(tps) == 0 {
-		return []PartitionReplicas{}, errors.New("no partitions to assign")
-	}
-
-	replicationFactor := tps[0].Replication
+	replicationFactor := partitions[0].Replication
 
 	// Set of all BrokerIDs available for serving partitions
 	bidSet := buildBrokerIDSet(brokers, isRackAware)
 
 	// pick a broker based on the existing allocation
-	startBroker, err := tps[0].Leader, nil
-	if err != nil {
-		return []PartitionReplicas{}, err
-	}
+	startBroker := partitions[0].Leader
 
 	startIndex, err := bidSet.IndexOf(startBroker)
 	if err != nil {
-		return []PartitionReplicas{}, err
+		return []PartitionDistribution{}, err
 	}
 
 	// Mapping between a specific partition and the bidSet holding a replica
-	tpBrokerMap := map[TopicPartition]*BrokerIDTreeSet{}
-	for _, tp := range tps {
-		tpBrokerMap[tp.TopicPartition] = NewBrokerIDSet()
+	tpBrokerMap := map[topicPartition]*BrokerIDTreeSet{}
+	for _, tp := range partitions {
+		tpBrokerMap[topicPartition{tp.Topic, tp.Partition}] = NewBrokerIDSet()
 	}
 
 	// partitions should be assigned to brokerIDs "replicationFactor" times
 	for i := 0; i < replicationFactor; i++ {
 		j := startIndex
-		for _, tp := range tps {
+		for _, tp := range partitions {
 			for {
 				brokerID, err := bidSet.Get(j)
 				if err != nil {
@@ -118,11 +84,11 @@ func (uds *UniformDistStrategy) topicAssignments(topic string) ([]PartitionRepli
 						}
 						continue
 					default:
-						return []PartitionReplicas{}, err
+						return []PartitionDistribution{}, err
 					}
 
 				}
-				success := tpBrokerMap[tp.TopicPartition].Add(brokerID)
+				success := tpBrokerMap[topicPartition{tp.Topic, tp.Partition}].Add(brokerID)
 				if success {
 					break
 				}

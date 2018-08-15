@@ -2,34 +2,46 @@ package kafkactl
 
 import (
 	"errors"
-	"math/rand"
+	"fmt"
 	"reflect"
 	"sort"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 // ErrTopicsMissing is thrown when we attempt to create a strategy without specifying any topic names
 var ErrTopicsMissing = errors.New("topics missing for strategy")
 
 // Strategy is the interface that exposes method to implement a partition distribution
 type Strategy interface {
-	Assignments() ([]PartitionReplicas, error)
+	Assignments() ([]PartitionDistribution, error)
+}
+
+type StrategyConfigs struct {
+	// TopicPartitions is the list of Partitions that will be considered for rebalancing
+	TopicPartitions []TopicPartitionInfo
+
+	// Brokers is the list of Broker objects involved in the rebalancing
+	Brokers []Broker
+}
+
+type topicPartition struct {
+	Topic     string `json:"topic"`
+	Partition int64  `json:"partition"`
+}
+
+func (tp topicPartition) ToString() string {
+	return fmt.Sprintf("%s-%d", tp.Topic, tp.Partition)
 }
 
 // PartitionReplicasDiff returns the difference between two sets of PartitionReplica slices
-func PartitionReplicasDiff(old []PartitionReplicas, new []PartitionReplicas) []PartitionReplicas {
-	var diff []PartitionReplicas
-	mp := map[TopicPartition][]BrokerID{}
+func PartitionReplicasDiff(old []PartitionDistribution, new []PartitionDistribution) []PartitionDistribution {
+	var diff []PartitionDistribution
+	mp := map[topicPartition][]BrokerID{}
 	for _, pr := range old {
-		mp[TopicPartition{Topic: pr.Topic, Partition: pr.Partition}] = pr.Replicas
+		mp[topicPartition{Topic: pr.Topic, Partition: pr.Partition}] = pr.Replicas
 	}
 
 	for _, pr := range new {
-		tp := TopicPartition{Topic: pr.Topic, Partition: pr.Partition}
+		tp := topicPartition{Topic: pr.Topic, Partition: pr.Partition}
 		replicas, exists := mp[tp]
 		if !exists {
 			diff = append(diff, pr)
@@ -46,10 +58,10 @@ func PartitionReplicasDiff(old []PartitionReplicas, new []PartitionReplicas) []P
 	return diff
 }
 
-func toPartitionReplicas(tpMap map[TopicPartition]*BrokerIDTreeSet) []PartitionReplicas {
-	var prs []PartitionReplicas
+func toPartitionReplicas(tpMap map[topicPartition]*BrokerIDTreeSet) []PartitionDistribution {
+	var prs []PartitionDistribution
 	for tp, bids := range tpMap {
-		prs = append(prs, PartitionReplicas{
+		prs = append(prs, PartitionDistribution{
 			Topic:     tp.Topic,
 			Partition: tp.Partition,
 			Replicas:  bids.GetAll(),
@@ -135,12 +147,22 @@ func merge(groups [][]BrokerID) ([]BrokerID, [][]BrokerID) {
 // Ensure its checked before invoking split
 func split(grp []BrokerID) (BrokerID, []BrokerID) { return grp[0], grp[1:] }
 
-var randomStartIndexFn = randomStartIndex
-
-func randomStartIndex(max int) int { return rand.Intn(max) }
+func groupByTopic(tps []TopicPartitionInfo) map[string][]TopicPartitionInfo {
+	mp := map[string][]TopicPartitionInfo{}
+	for _, tp := range tps {
+		current, exists := mp[tp.Topic]
+		if !exists {
+			mp[tp.Topic] = []TopicPartitionInfo{tp}
+			continue
+		}
+		current = append(current, tp)
+		mp[tp.Topic] = current
+	}
+	return mp
+}
 
 // -- Sort helpers
-type byPartitionInPartitionReplicas []PartitionReplicas
+type byPartitionInPartitionReplicas []PartitionDistribution
 
 func (p byPartitionInPartitionReplicas) Len() int { return len(p) }
 
