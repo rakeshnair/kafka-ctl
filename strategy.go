@@ -12,7 +12,8 @@ var ErrTopicsMissing = errors.New("topics missing for strategy")
 
 // Strategy is the interface that exposes method to implement a partition distribution
 type Strategy interface {
-	Assignments() ([]PartitionDistribution, error)
+	Assignments(configs StrategyConfigs) ([]PartitionDistribution, error)
+	Name() string
 }
 
 type StrategyConfigs struct {

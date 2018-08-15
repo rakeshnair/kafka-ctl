@@ -63,3 +63,8 @@ func (mds *MatchingDistStrategy) Assignments(configs StrategyConfigs) ([]Partiti
 
 	return finalPrs, nil
 }
+
+// Name returns the name of the strategy
+func (mds *MatchingDistStrategy) Name() string {
+	return "matching-dist-strategy"
+}

@@ -43,6 +43,11 @@ func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]Partitio
 	return prs, nil
 }
 
+// Name returns the name of the strategy
+func (uds *UniformDistStrategy) Name() string {
+	return "uniform-dist-strategy"
+}
+
 func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Broker, partitions []TopicPartitionInfo) ([]PartitionDistribution, error) {
 	// Check if rack awareness need to be considered
 	isRackAware := true
