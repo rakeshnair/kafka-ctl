@@ -462,7 +462,7 @@ func TestCluster_DescribeTopicsForBroker(t *testing.T) {
 	}
 }
 
-func TestCluster_PartitionDistribution(t *testing.T) {
+func TestCluster_CurrentTopicBrokerDistribution(t *testing.T) {
 	type kv struct{ k, v string }
 	tests := []struct {
 		input    string
@@ -524,7 +524,7 @@ func TestCluster_PartitionDistribution(t *testing.T) {
 	}
 }
 
-func TestCluster_PartitionReplicaDistribution(t *testing.T) {
+func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 	type kv struct{ k, v string }
 	tests := []struct {
 		input    string
@@ -588,6 +588,94 @@ func TestCluster_PartitionReplicaDistribution(t *testing.T) {
 	}
 }
 
+func TestCluster_PartitionReassignRequest(t *testing.T) {
+	tests := []struct {
+		input    []PartitionDistribution
+		expected ReassignmentReq
+	}{
+		{
+			input: []PartitionDistribution{
+				{"kafka-topic-1", 0, []BrokerID{2, 1}},
+				{"kafka-topic-1", 1, []BrokerID{1, 2}},
+				{"kafka-topic-1", 2, []BrokerID{2, 1}},
+			},
+			expected: ReassignmentReq{
+				Version: 1,
+				Partitions: []PartitionDistribution{
+					{"kafka-topic-1", 0, []BrokerID{2, 1}},
+					{"kafka-topic-1", 1, []BrokerID{1, 2}},
+					{"kafka-topic-1", 2, []BrokerID{2, 1}},
+				},
+			},
+		},
+		{
+			input: []PartitionDistribution{},
+			expected: ReassignmentReq{
+				Version:    1,
+				Partitions: []PartitionDistribution{},
+			},
+		},
+	}
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+
+			c := testCluster(t)
+
+			actual := c.PartitionReassignRequest(test.input)
+			assert.EqualValues(t, test.expected, actual)
+		})
+	}
+}
+
+func TestCluster_ReassignPartitions(t *testing.T) {
+	tests := []struct {
+		input    ReassignmentReq
+		expected string
+	}{
+		{
+			input: ReassignmentReq{
+				Version: 1,
+				Partitions: []PartitionDistribution{
+					{"kafka-topic-1", 0, []BrokerID{2, 1}},
+					{"kafka-topic-1", 1, []BrokerID{1, 2}},
+					{"kafka-topic-1", 2, []BrokerID{2, 1}},
+				},
+			},
+			expected: "{\"version\":1,\"partitions\":[{\"topic\":\"kafka-topic-1\",\"partition\":0,\"replicas\":[2,1]},{\"topic\":\"kafka-topic-1\",\"partition\":1,\"replicas\":[1,2]},{\"topic\":\"kafka-topic-1\",\"partition\":2,\"replicas\":[2,1]}]}",
+		},
+		{
+			input: ReassignmentReq{
+				Version: 1,
+				Partitions: []PartitionDistribution{
+					{"kafka-topic-1", 0, []BrokerID{2, 1}},
+					{"kafka-topic-1", 1, []BrokerID{1, 2}},
+					{"kafka-topic-2", 0, []BrokerID{1, 1}},
+					{"kafka-topic-2", 1, []BrokerID{3, 1}},
+				},
+			},
+			expected: "{\"version\":1,\"partitions\":[{\"topic\":\"kafka-topic-1\",\"partition\":0,\"replicas\":[2,1]},{\"topic\":\"kafka-topic-1\",\"partition\":1,\"replicas\":[1,2]},{\"topic\":\"kafka-topic-2\",\"partition\":0,\"replicas\":[1,1]},{\"topic\":\"kafka-topic-2\",\"partition\":1,\"replicas\":[3,1]}]}",
+		},
+	}
+	for index, test := range tests {
+		t.Run(indexedScenario(index), func(t *testing.T) {
+			defer func() {
+				removeAdminNode(t)
+			}()
+
+			c := testCluster(t)
+
+			err := c.ReassignPartitions(test.input)
+			exitOnErr(t, err)
+
+			data, err := c.store.Get(PartitionReassignmentPath)
+			exitOnErr(t, err)
+
+			assert.EqualValues(t, test.expected, string(data))
+		})
+	}
+
+}
+
 func testCluster(t *testing.T) *Cluster { return NewCluster(&ZkClusterStore{conn: testZkConn(t)}) }
 
 func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: testZkConn(t)} }
@@ -595,5 +683,11 @@ func testStore(t *testing.T) *ZkClusterStore { return &ZkClusterStore{conn: test
 func removeBrokerNode(t *testing.T) {
 	store := testStore(t)
 	store.Remove("/brokers")
+	store.Close()
+}
+
+func removeAdminNode(t *testing.T) {
+	store := testStore(t)
+	store.Remove("/admin")
 	store.Close()
 }

@@ -359,6 +359,7 @@ func (c *Cluster) ReassignPartitions(req ReassignmentReq) error {
 	if err != nil {
 		return err
 	}
+
 	err = c.store.Set(PartitionReassignmentPath, data)
 	return err
 }
