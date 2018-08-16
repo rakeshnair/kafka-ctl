@@ -36,7 +36,6 @@ func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]Partitio
 		if err != nil {
 			return []PartitionDistribution{}, err
 		}
-		sort.Sort(byPartitionInPartitionReplicas(tprs))
 		prs = append(prs, tprs...)
 	}
 

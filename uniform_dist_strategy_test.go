@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//go:generate mockery -dir . -outpkg kafkactl -inpkg -output . -case underscore -name=ClusterAPI
-
 func TestUniformDistStrategy_Assignments(t *testing.T) {
 
 	t.Run("single_topic", func(t *testing.T) {

@@ -9,8 +9,8 @@ type ClusterAPI interface {
 	DescribeTopic(name string) ([]TopicPartitionInfo, error)
 	DescribeAllTopics() ([]TopicPartitionInfo, error)
 	DescribeTopicsForBroker(id BrokerID) ([]TopicPartitionInfo, error)
-	PartitionDistribution(topic string) ([]TopicBrokerDistribution, error)
-	PartitionReplicaDistribution(topic string) ([]PartitionDistribution, error)
+	CurrentTopicBrokerDistribution(topic string) ([]TopicBrokerDistribution, error)
+	CurrentPartitionDistribution(topic string) ([]PartitionDistribution, error)
 	PartitionReassignRequest(partitions []PartitionDistribution) ReassignmentReq
 	ReassignPartitions(req ReassignmentReq) error
 }

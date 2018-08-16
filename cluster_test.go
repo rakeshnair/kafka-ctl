@@ -673,7 +673,6 @@ func TestCluster_ReassignPartitions(t *testing.T) {
 			assert.EqualValues(t, test.expected, string(data))
 		})
 	}
-
 }
 
 func testCluster(t *testing.T) *Cluster { return NewCluster(&ZkClusterStore{conn: testZkConn(t)}) }
