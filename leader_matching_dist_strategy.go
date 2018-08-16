@@ -2,20 +2,20 @@ package kafkactl
 
 import "errors"
 
-// MatchingDistStrategy creates a partition assignment for a group of at least 2 distinct topics
-// For the first topic in the list, it applies the Uniform Distribution Strategy.
-// For all the subsequent topics in the list it ensures that the partition distribution is the same
+// LeaderMatchingDistStrategy creates a partition assignment for a group of at least 2 distinct topics
+// For the first topic in the list(Leader), it applies the Uniform Distribution Strategy.
+// For all the subsequent topics(Followers) in the list it ensures that the partition distribution is the same
 // as the one for the first topic
-type MatchingDistStrategy struct{}
+type LeaderMatchingDistStrategy struct{}
 
-// NewMatchingDistStrategy creates a new instance of MatchingDistStrategy
-func NewMatchingDistStrategy() *MatchingDistStrategy { return &MatchingDistStrategy{} }
+// NewMatchingDistStrategy creates a new instance of LeaderMatchingDistStrategy
+func NewMatchingDistStrategy() *LeaderMatchingDistStrategy { return &LeaderMatchingDistStrategy{} }
 
 // ErrInsufficientTopics is thrown while trying to rebalance a partition set consisting of less than 2 unique topics
 var ErrInsufficientTopics = errors.New("matching distribution strategy requires partitions from at least 2 topics")
 
 // Assignments returns partition assignments based on matching distribution strategy
-func (mds *MatchingDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
+func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
 	if len(configs.TopicPartitions) == 0 {
 		return []PartitionDistribution{}, ErrEmptyPartitions
 	}
@@ -65,6 +65,6 @@ func (mds *MatchingDistStrategy) Assignments(configs StrategyConfigs) ([]Partiti
 }
 
 // Name returns the name of the strategy
-func (mds *MatchingDistStrategy) Name() string {
-	return "matching-dist-strategy"
+func (lmds *LeaderMatchingDistStrategy) Name() string {
+	return "leader-matching-dist-strategy"
 }

@@ -22,7 +22,7 @@ func TestStrategy_toPartitionReplicas(t *testing.T) {
 		{"topic1", 0, []BrokerID{1, 3, 4, 5}},
 		{"topic2", 1, []BrokerID{3, 4}},
 	}
-	actual := toPartitionReplicas(input)
+	actual := generatePartitionDistribution(input)
 	assert.EqualValues(t, expected, actual)
 }
 

@@ -110,5 +110,5 @@ func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Brok
 		}
 	}
 
-	return toPartitionReplicas(tpBrokerMap), nil
+	return generatePartitionDistribution(tpBrokerMap), nil
 }

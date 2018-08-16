@@ -59,7 +59,7 @@ func PartitionReplicasDiff(old []PartitionDistribution, new []PartitionDistribut
 	return diff
 }
 
-func toPartitionReplicas(tpMap map[topicPartition]*BrokerIDTreeSet) []PartitionDistribution {
+func generatePartitionDistribution(tpMap map[topicPartition]*BrokerIDTreeSet) []PartitionDistribution {
 	var prs []PartitionDistribution
 	for tp, bids := range tpMap {
 		prs = append(prs, PartitionDistribution{
