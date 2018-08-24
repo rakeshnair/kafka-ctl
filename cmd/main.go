@@ -17,8 +17,8 @@ import (
 	"github.com/segmentio/events"
 	_ "github.com/segmentio/events/ecslogs"
 	_ "github.com/segmentio/events/text"
-	"github.com/segmentio/kafka-ctl"
-	"github.com/segmentio/kafka-ctl/service"
+	"github.com/segmentio/kafkactl"
+	"github.com/segmentio/kafkactl/service"
 )
 
 type configs struct {

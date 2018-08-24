@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/segmentio/kafka-ctl"
+	"github.com/segmentio/kafkactl"
 )
 
 type ControlServiceConfigs struct {

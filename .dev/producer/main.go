@@ -20,7 +20,7 @@ import (
 	"github.com/segmentio/events"
 	_ "github.com/segmentio/events/ecslogs"
 	_ "github.com/segmentio/events/text"
-	"github.com/segmentio/kafka-ctl/.dev/message"
+	"github.com/segmentio/kafkactl/.dev/message"
 	"github.com/segmentio/ksuid"
 )
 

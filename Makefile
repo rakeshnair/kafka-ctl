@@ -10,10 +10,10 @@ build.server:
 	@echo "successfully built server"
 
 docker.launch:
-	@docker run -ti --rm --network host -v $(pwd)/build:/binaries kafka-ctl:latest sh
+	@docker run -ti --rm --network host -v $(pwd)/build:/binaries kafkactl:latest sh
 
 docker.build:
-	@docker build . -t kafka-ctl:latest
+	@docker build . -t kafkactl:latest
 
 docker.kafka.start:
 	@docker-compose -f docker-compose-cluster.yml up -d
