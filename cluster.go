@@ -54,8 +54,8 @@ type TopicPartitionInfo struct {
 	ISR         []BrokerID `json:"isr"`
 }
 
-// PartitionDistribution wraps a topic,partition tuple and its list of replicas
-type PartitionDistribution struct {
+// PartitionReplicas wraps a topic,partition tuple and its list of replicas
+type PartitionReplicas struct {
 	Topic     string     `json:"topic"`
 	Partition int64      `json:"partition"`
 	Replicas  []BrokerID `json:"replicas"`
@@ -65,8 +65,8 @@ type PartitionDistribution struct {
 // a new partition reassignment
 // TODO: Add throttle configs
 type ReassignmentReq struct {
-	Version    int                     `json:"version"`
-	Partitions []PartitionDistribution `json:"partitions"`
+	Version    int                 `json:"version"`
+	Partitions []PartitionReplicas `json:"partitions"`
 }
 
 // NewCluster returns a new client to interact with a Kafka cluster
@@ -286,9 +286,9 @@ type TopicBrokerDistribution struct {
 	Replicas []int64  `json:"replicas"`
 }
 
-// CurrentTopicBrokerDistribution for a specific topic indicates how the leaders and replicas are
+// ReplicaDistributionByBroker for a specific topic indicates how the leaders and replicas are
 // distributed among the available brokerIDs in the cluster
-func (c *Cluster) CurrentTopicBrokerDistribution(topic string) ([]TopicBrokerDistribution, error) {
+func (c *Cluster) ReplicaDistributionByBroker(topic string) ([]TopicBrokerDistribution, error) {
 	brokers, err := c.Brokers()
 	if err != nil {
 		return []TopicBrokerDistribution{}, err
@@ -328,25 +328,24 @@ func (c *Cluster) CurrentTopicBrokerDistribution(topic string) ([]TopicBrokerDis
 	return pds, nil
 }
 
-// CurrentPartitionDistribution is a helper function that trims the result of a DescribeTopic and
-// returns a slice of PartitionReplica objects from it
-func (c *Cluster) CurrentPartitionDistribution(topic string) ([]PartitionDistribution, error) {
+// ReplicaDistribution returns replica distribution for all the partitions in the topic
+func (c *Cluster) ReplicaDistribution(topic string) ([]PartitionReplicas, error) {
 	tps, err := c.DescribeTopic(topic)
 	if err != nil {
-		return []PartitionDistribution{}, err
+		return []PartitionReplicas{}, err
 	}
 
-	var prs []PartitionDistribution
+	var prs []PartitionReplicas
 	for _, tp := range tps {
-		prs = append(prs, PartitionDistribution{Topic: tp.Topic, Partition: tp.Partition, Replicas: tp.Replicas})
+		prs = append(prs, PartitionReplicas{Topic: tp.Topic, Partition: tp.Partition, Replicas: tp.Replicas})
 	}
 
 	sort.Sort(byPartitionInPartitionReplicas(prs))
 	return prs, nil
 }
 
-// PartitionReassignRequest generates a ReassignmentReq from the input list of PartitionDistribution
-func (c *Cluster) PartitionReassignRequest(partitions []PartitionDistribution) ReassignmentReq {
+// PartitionReassignRequest generates a ReassignmentReq from the input list of PartitionReplicas
+func (c *Cluster) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
 	return ReassignmentReq{
 		Version:    1,
 		Partitions: partitions,

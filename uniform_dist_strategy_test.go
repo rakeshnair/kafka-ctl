@@ -22,7 +22,7 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-1", 2, []BrokerID{1, 3}},
@@ -51,7 +51,7 @@ func TestUniformDistStrategy_Assignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-1", 2, []BrokerID{1, 3}},
@@ -81,7 +81,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{1, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 		}
@@ -105,7 +105,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{1, 3}},
 			{"kafka-test-1", 1, []BrokerID{3, 2}},
 			{"kafka-test-1", 2, []BrokerID{2, 1}},
@@ -131,7 +131,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-1", 2, []BrokerID{1, 3}},
@@ -157,7 +157,7 @@ func TestUniformDistStrategy_topicAssignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{1, 3, 2}},
 			{"kafka-test-1", 1, []BrokerID{3, 2, 1}},
 			{"kafka-test-1", 2, []BrokerID{2, 1, 3}},

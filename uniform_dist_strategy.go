@@ -15,9 +15,9 @@ func NewUniformDistStrategy() *UniformDistStrategy { return &UniformDistStrategy
 var ErrEmptyPartitions = errors.New("partition list for rebalancing is empty")
 
 // Assignments returns a distribution where partitions are uniformly distributed among brokers
-func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
+func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionReplicas, error) {
 	if len(configs.TopicPartitions) == 0 {
-		return []PartitionDistribution{}, ErrEmptyPartitions
+		return []PartitionReplicas{}, ErrEmptyPartitions
 	}
 
 	brokers := configs.Brokers
@@ -30,11 +30,11 @@ func (uds *UniformDistStrategy) Assignments(configs StrategyConfigs) ([]Partitio
 
 	sort.Strings(topics)
 
-	var prs []PartitionDistribution
+	var prs []PartitionReplicas
 	for _, topic := range topics {
 		tprs, err := uds.generateAssignments(topic, brokers, groupedTps[topic])
 		if err != nil {
-			return []PartitionDistribution{}, err
+			return []PartitionReplicas{}, err
 		}
 		prs = append(prs, tprs...)
 	}
@@ -47,7 +47,7 @@ func (uds *UniformDistStrategy) Name() string {
 	return "uniform-dist-strategy"
 }
 
-func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Broker, partitions []TopicPartitionInfo) ([]PartitionDistribution, error) {
+func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Broker, partitions []TopicPartitionInfo) ([]PartitionReplicas, error) {
 	// Check if rack awareness need to be considered
 	isRackAware := true
 	for _, broker := range brokers {
@@ -64,7 +64,7 @@ func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Brok
 
 	startIndex, err := bidSet.IndexOf(startBroker)
 	if err != nil {
-		return []PartitionDistribution{}, err
+		return []PartitionReplicas{}, err
 	}
 
 	// Mapping between a specific partition and the bidSet holding a replica
@@ -88,7 +88,7 @@ func (uds *UniformDistStrategy) generateAssignments(topic string, brokers []Brok
 						}
 						continue
 					default:
-						return []PartitionDistribution{}, err
+						return []PartitionReplicas{}, err
 					}
 
 				}

@@ -9,15 +9,15 @@ type MockStrategy struct {
 }
 
 // Assignments provides a mock function with given fields: configs
-func (_m *MockStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
+func (_m *MockStrategy) Assignments(configs StrategyConfigs) ([]PartitionReplicas, error) {
 	ret := _m.Called(configs)
 
-	var r0 []PartitionDistribution
-	if rf, ok := ret.Get(0).(func(StrategyConfigs) []PartitionDistribution); ok {
+	var r0 []PartitionReplicas
+	if rf, ok := ret.Get(0).(func(StrategyConfigs) []PartitionReplicas); ok {
 		r0 = rf(configs)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]PartitionDistribution)
+			r0 = ret.Get(0).([]PartitionReplicas)
 		}
 	}
 

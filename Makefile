@@ -5,9 +5,9 @@ build.dev.%:
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o build/$(name)/main .dev/$(name)/main.go
 	@echo "successfully built $(name)"
 
-build.client:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o build/client/main cmd/main.go
-	@echo "successfully built client"
+build.server:
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o build/server/server cmd/main.go
+	@echo "successfully built server"
 
 docker.launch:
 	@docker run -ti --rm --network host -v $(pwd)/build:/binaries kafka-ctl:latest sh

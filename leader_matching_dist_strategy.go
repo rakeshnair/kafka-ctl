@@ -15,9 +15,9 @@ func NewMatchingDistStrategy() *LeaderMatchingDistStrategy { return &LeaderMatch
 var ErrInsufficientTopics = errors.New("matching distribution strategy requires partitions from at least 2 topics")
 
 // Assignments returns partition assignments based on matching distribution strategy
-func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionDistribution, error) {
+func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]PartitionReplicas, error) {
 	if len(configs.TopicPartitions) == 0 {
-		return []PartitionDistribution{}, ErrEmptyPartitions
+		return []PartitionReplicas{}, ErrEmptyPartitions
 	}
 
 	brokers := configs.Brokers
@@ -25,7 +25,7 @@ func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]
 
 	groupedTps := groupByTopic(configs.TopicPartitions)
 	if len(groupedTps) < 2 {
-		return []PartitionDistribution{}, ErrInsufficientTopics
+		return []PartitionReplicas{}, ErrInsufficientTopics
 	}
 
 	uds := NewUniformDistStrategy()
@@ -35,7 +35,7 @@ func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]
 	})
 
 	if err != nil {
-		return []PartitionDistribution{}, err
+		return []PartitionReplicas{}, err
 	}
 
 	basePrsMap := map[topicPartition][]BrokerID{}
@@ -43,7 +43,7 @@ func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]
 		basePrsMap[topicPartition{prs.Topic, prs.Partition}] = prs.Replicas
 	}
 
-	var finalPrs []PartitionDistribution
+	var finalPrs []PartitionReplicas
 	finalPrs = append(finalPrs, basePrs...)
 
 	firstTopicPartCount := int64(len(basePrsMap))
@@ -53,7 +53,7 @@ func (lmds *LeaderMatchingDistStrategy) Assignments(configs StrategyConfigs) ([]
 			continue
 		}
 		for _, partition := range partitions {
-			finalPrs = append(finalPrs, PartitionDistribution{
+			finalPrs = append(finalPrs, PartitionReplicas{
 				Topic:     partition.Topic,
 				Partition: partition.Partition,
 				Replicas:  basePrsMap[topicPartition{Topic: firstTopic, Partition: partition.Partition % firstTopicPartCount}],

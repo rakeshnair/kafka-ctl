@@ -23,7 +23,7 @@ func TestMatchingDistStrategy_Assignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-1", 2, []BrokerID{1, 3}},
@@ -55,7 +55,7 @@ func TestMatchingDistStrategy_Assignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-1", 2, []BrokerID{1, 3}},
@@ -86,7 +86,7 @@ func TestMatchingDistStrategy_Assignments(t *testing.T) {
 		}
 
 		// --expected
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-test-1", 0, []BrokerID{3, 2}},
 			{"kafka-test-1", 1, []BrokerID{2, 1}},
 			{"kafka-test-2", 0, []BrokerID{3, 2}},

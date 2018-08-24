@@ -50,6 +50,17 @@
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
+  digest = "1:a66fce629a0e374ac46a776c32a536fdd01d05d56163bac4fab2e0f633d4d79b"
+  name = "github.com/gorilla/rpc"
+  packages = [
+    "v2",
+    "v2/json",
+  ]
+  pruneopts = "UT"
+  revision = "22c016f3df3febe0c1f6727598b6389507e03a18"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:e2d1d410fb367567c2b53ed9e2d719d3c1f0891397bb2fa49afd747cfbf1e8e4"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
@@ -212,6 +223,8 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Shopify/sarama",
+    "github.com/gorilla/rpc/v2",
+    "github.com/gorilla/rpc/v2/json",
     "github.com/olekukonko/tablewriter",
     "github.com/pkg/errors",
     "github.com/samuel/go-zookeeper/zk",

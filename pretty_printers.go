@@ -38,7 +38,7 @@ func PrettyPrintTopicPartitionInfo(tps []TopicPartitionInfo) {
 	tw.Render()
 }
 
-func PrettyPrintPartitionReplicas(prs []PartitionDistribution) {
+func PrettyPrintPartitionReplicas(prs []PartitionReplicas) {
 	tw := tablewriter.NewWriter(os.Stdout)
 	tw.SetHeader([]string{"Partition", "Replicas"})
 

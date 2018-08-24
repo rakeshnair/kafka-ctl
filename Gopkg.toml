@@ -57,3 +57,7 @@ required = ["github.com/Shopify/sarama", "github.com/segmentio/conf", "github.co
 [[constraint]]
   name = "github.com/Shopify/sarama"
   version = "1.17.0"
+
+[[constraint]]
+  name = "github.com/gorilla/rpc"
+  version = "1.1.0"

@@ -32,7 +32,7 @@ func TestRebalancer_Generate(t *testing.T) {
 			Strategy: strategy,
 		}
 
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-topic-1", 0, []BrokerID{1, 2}},
 			{"kafka-topic-1", 1, []BrokerID{2, 1}},
 		}
@@ -46,8 +46,8 @@ func TestRebalancer_Generate(t *testing.T) {
 				{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 1},
 			}, nil)
 
-		mockCluster.On("CurrentPartitionDistribution", "kafka-test-1").Return(
-			[]PartitionDistribution{
+		mockCluster.On("ReplicaDistribution", "kafka-test-1").Return(
+			[]PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 			}, nil)
@@ -56,7 +56,7 @@ func TestRebalancer_Generate(t *testing.T) {
 			[]Broker{{Id: 1}, {Id: 2}}, nil)
 
 		mockStrategy.On("Assignments", mock.Anything).Return(
-			[]PartitionDistribution{
+			[]PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{2, 1}},
 			}, nil)
@@ -80,7 +80,7 @@ func TestRebalancer_Generate(t *testing.T) {
 			Strategy: strategy,
 		}
 
-		expected := []PartitionDistribution{
+		expected := []PartitionReplicas{
 			{"kafka-topic-1", 2, []BrokerID{3, 1}},
 		}
 
@@ -93,8 +93,8 @@ func TestRebalancer_Generate(t *testing.T) {
 				{Topic: "kafka-test-1", Partition: 1, Replication: 2, Leader: 1},
 			}, nil)
 
-		mockCluster.On("CurrentPartitionDistribution", "kafka-test-1").Return(
-			[]PartitionDistribution{
+		mockCluster.On("ReplicaDistribution", "kafka-test-1").Return(
+			[]PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 			}, nil)
@@ -103,7 +103,7 @@ func TestRebalancer_Generate(t *testing.T) {
 			[]Broker{{Id: 1}, {Id: 2}}, nil)
 
 		mockStrategy.On("Assignments", mock.Anything).Return(
-			[]PartitionDistribution{
+			[]PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-1", 2, []BrokerID{3, 1}},
@@ -124,67 +124,67 @@ func TestRebalancer_Generate(t *testing.T) {
 
 func TestRebalancer_distributionDiff(t *testing.T) {
 	tests := []struct {
-		old      []PartitionDistribution
-		new      []PartitionDistribution
-		expected []PartitionDistribution
+		old      []PartitionReplicas
+		new      []PartitionReplicas
+		expected []PartitionReplicas
 	}{
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 1}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{1, 3}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 1}},
 				{"kafka-topic-2", 2, []BrokerID{2, 1}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{1, 3}},
 				{"kafka-topic-2", 2, []BrokerID{2, 1}},
 			},
 		},
 		{
-			old: []PartitionDistribution{},
-			new: []PartitionDistribution{
+			old: []PartitionReplicas{},
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{1, 3}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{1, 3}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 			},
 		},
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 1}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 1, []BrokerID{3, 1}},
 			},
 			expected: nil,
 		},
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-2", 0, []BrokerID{1, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 1}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 1, []BrokerID{3, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 2}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 1, []BrokerID{3, 1}},
 				{"kafka-topic-2", 1, []BrokerID{3, 2}},
 			},
@@ -259,7 +259,7 @@ func TestRebalancer_brokers(t *testing.T) {
 }
 
 func TestRebalancer_Execute(t *testing.T) {
-	input := []PartitionDistribution{
+	input := []PartitionReplicas{
 		{"kafka-topic-1", 1, []BrokerID{3, 1}},
 		{"kafka-topic-2", 1, []BrokerID{3, 2}},
 	}

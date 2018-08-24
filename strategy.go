@@ -12,7 +12,7 @@ var ErrTopicsMissing = errors.New("topics missing for strategy")
 
 // Strategy is the interface that exposes method to implement a partition distribution
 type Strategy interface {
-	Assignments(configs StrategyConfigs) ([]PartitionDistribution, error)
+	Assignments(configs StrategyConfigs) ([]PartitionReplicas, error)
 	Name() string
 }
 
@@ -34,8 +34,8 @@ func (tp topicPartition) ToString() string {
 }
 
 // PartitionReplicasDiff returns the difference between two sets of PartitionReplica slices
-func PartitionReplicasDiff(old []PartitionDistribution, new []PartitionDistribution) []PartitionDistribution {
-	var diff []PartitionDistribution
+func PartitionReplicasDiff(old []PartitionReplicas, new []PartitionReplicas) []PartitionReplicas {
+	var diff []PartitionReplicas
 	mp := map[topicPartition][]BrokerID{}
 	for _, pr := range old {
 		mp[topicPartition{Topic: pr.Topic, Partition: pr.Partition}] = pr.Replicas
@@ -59,10 +59,10 @@ func PartitionReplicasDiff(old []PartitionDistribution, new []PartitionDistribut
 	return diff
 }
 
-func generatePartitionDistribution(tpMap map[topicPartition]*BrokerIDTreeSet) []PartitionDistribution {
-	var prs []PartitionDistribution
+func generatePartitionDistribution(tpMap map[topicPartition]*BrokerIDTreeSet) []PartitionReplicas {
+	var prs []PartitionReplicas
 	for tp, bids := range tpMap {
-		prs = append(prs, PartitionDistribution{
+		prs = append(prs, PartitionReplicas{
 			Topic:     tp.Topic,
 			Partition: tp.Partition,
 			Replicas:  bids.GetAll(),
@@ -163,7 +163,7 @@ func groupByTopic(tps []TopicPartitionInfo) map[string][]TopicPartitionInfo {
 }
 
 // -- Sort helpers
-type byPartitionInPartitionReplicas []PartitionDistribution
+type byPartitionInPartitionReplicas []PartitionReplicas
 
 func (p byPartitionInPartitionReplicas) Len() int { return len(p) }
 

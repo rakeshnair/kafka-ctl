@@ -18,7 +18,7 @@ func TestStrategy_toPartitionReplicas(t *testing.T) {
 		set.entries = []BrokerID{3, 4}
 		return set
 	}()
-	expected := []PartitionDistribution{
+	expected := []PartitionReplicas{
 		{"topic1", 0, []BrokerID{1, 3, 4, 5}},
 		{"topic2", 1, []BrokerID{3, 4}},
 	}
@@ -73,61 +73,61 @@ func TestStrategy_mergeN(t *testing.T) {
 
 func TestStrategy_PartitionReplicasDiff(t *testing.T) {
 	tests := []struct {
-		old      []PartitionDistribution
-		new      []PartitionDistribution
-		expected []PartitionDistribution
+		old      []PartitionReplicas
+		new      []PartitionReplicas
+		expected []PartitionReplicas
 	}{
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			expected: []PartitionDistribution{},
+			expected: []PartitionReplicas{},
 		},
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1, 0}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
 		},
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 				{"kafka-topic-1", 2, []BrokerID{1, 2, 0}},
 			},
 		},
 		{
-			old: []PartitionDistribution{
+			old: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 1, 2}},
 			},
-			new: []PartitionDistribution{
+			new: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{0, 2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2, 3}},
 			},

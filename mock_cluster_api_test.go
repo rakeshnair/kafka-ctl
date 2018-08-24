@@ -73,52 +73,6 @@ func (_m *MockClusterAPI) Controller() (Broker, error) {
 	return r0, r1
 }
 
-// CurrentPartitionDistribution provides a mock function with given fields: topic
-func (_m *MockClusterAPI) CurrentPartitionDistribution(topic string) ([]PartitionDistribution, error) {
-	ret := _m.Called(topic)
-
-	var r0 []PartitionDistribution
-	if rf, ok := ret.Get(0).(func(string) []PartitionDistribution); ok {
-		r0 = rf(topic)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]PartitionDistribution)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(topic)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// CurrentTopicBrokerDistribution provides a mock function with given fields: topic
-func (_m *MockClusterAPI) CurrentTopicBrokerDistribution(topic string) ([]TopicBrokerDistribution, error) {
-	ret := _m.Called(topic)
-
-	var r0 []TopicBrokerDistribution
-	if rf, ok := ret.Get(0).(func(string) []TopicBrokerDistribution); ok {
-		r0 = rf(topic)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]TopicBrokerDistribution)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(topic)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DescribeAllTopics provides a mock function with given fields:
 func (_m *MockClusterAPI) DescribeAllTopics() ([]TopicPartitionInfo, error) {
 	ret := _m.Called()
@@ -210,11 +164,11 @@ func (_m *MockClusterAPI) ID() (string, error) {
 }
 
 // PartitionReassignRequest provides a mock function with given fields: partitions
-func (_m *MockClusterAPI) PartitionReassignRequest(partitions []PartitionDistribution) ReassignmentReq {
+func (_m *MockClusterAPI) PartitionReassignRequest(partitions []PartitionReplicas) ReassignmentReq {
 	ret := _m.Called(partitions)
 
 	var r0 ReassignmentReq
-	if rf, ok := ret.Get(0).(func([]PartitionDistribution) ReassignmentReq); ok {
+	if rf, ok := ret.Get(0).(func([]PartitionReplicas) ReassignmentReq); ok {
 		r0 = rf(partitions)
 	} else {
 		r0 = ret.Get(0).(ReassignmentReq)
@@ -235,6 +189,52 @@ func (_m *MockClusterAPI) ReassignPartitions(req ReassignmentReq) error {
 	}
 
 	return r0
+}
+
+// ReplicaDistribution provides a mock function with given fields: topic
+func (_m *MockClusterAPI) ReplicaDistribution(topic string) ([]PartitionReplicas, error) {
+	ret := _m.Called(topic)
+
+	var r0 []PartitionReplicas
+	if rf, ok := ret.Get(0).(func(string) []PartitionReplicas); ok {
+		r0 = rf(topic)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]PartitionReplicas)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(topic)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReplicaDistributionByBroker provides a mock function with given fields: topic
+func (_m *MockClusterAPI) ReplicaDistributionByBroker(topic string) ([]TopicBrokerDistribution, error) {
+	ret := _m.Called(topic)
+
+	var r0 []TopicBrokerDistribution
+	if rf, ok := ret.Get(0).(func(string) []TopicBrokerDistribution); ok {
+		r0 = rf(topic)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]TopicBrokerDistribution)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(topic)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Topics provides a mock function with given fields:

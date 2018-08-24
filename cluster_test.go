@@ -512,7 +512,7 @@ func TestCluster_CurrentTopicBrokerDistribution(t *testing.T) {
 				c.store.Set(input.k, []byte(input.v))
 			}
 
-			actual, err := c.CurrentTopicBrokerDistribution(test.input)
+			actual, err := c.ReplicaDistributionByBroker(test.input)
 			if test.err != nil {
 				assert.Equal(t, test.err, err)
 				return
@@ -529,7 +529,7 @@ func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 	tests := []struct {
 		input    string
 		seed     []kv
-		expected []PartitionDistribution
+		expected []PartitionReplicas
 		err      error
 	}{
 		{
@@ -540,7 +540,7 @@ func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-1/partitions/1/state", v: "{\"controller_epoch\":49,\"leader\":1,\"version\":1,\"leader_epoch\":0,\"isr\":[1,2]}"},
 				{k: "/brokers/topics/kafka-topic-1/partitions/2/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1}},
@@ -552,7 +552,7 @@ func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 				{k: "/brokers/topics/kafka-topic-2", v: "{\"version\":1,\"partitions\":{\"0\":[2,1]}}"},
 				{k: "/brokers/topics/kafka-topic-2/partitions/0/state", v: "{\"controller_epoch\":49,\"leader\":2,\"version\":1,\"leader_epoch\":0,\"isr\":[2,1]}"},
 			},
-			expected: []PartitionDistribution{
+			expected: []PartitionReplicas{
 				{"kafka-topic-2", 0, []BrokerID{2, 1}},
 			},
 		},
@@ -575,7 +575,7 @@ func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 				c.store.Set(input.k, []byte(input.v))
 			}
 
-			actual, err := c.CurrentPartitionDistribution(test.input)
+			actual, err := c.ReplicaDistribution(test.input)
 
 			if test.err == nil {
 				exitOnErr(t, err)
@@ -590,18 +590,18 @@ func TestCluster_CurrentPartitionDistribution(t *testing.T) {
 
 func TestCluster_PartitionReassignRequest(t *testing.T) {
 	tests := []struct {
-		input    []PartitionDistribution
+		input    []PartitionReplicas
 		expected ReassignmentReq
 	}{
 		{
-			input: []PartitionDistribution{
+			input: []PartitionReplicas{
 				{"kafka-topic-1", 0, []BrokerID{2, 1}},
 				{"kafka-topic-1", 1, []BrokerID{1, 2}},
 				{"kafka-topic-1", 2, []BrokerID{2, 1}},
 			},
 			expected: ReassignmentReq{
 				Version: 1,
-				Partitions: []PartitionDistribution{
+				Partitions: []PartitionReplicas{
 					{"kafka-topic-1", 0, []BrokerID{2, 1}},
 					{"kafka-topic-1", 1, []BrokerID{1, 2}},
 					{"kafka-topic-1", 2, []BrokerID{2, 1}},
@@ -609,10 +609,10 @@ func TestCluster_PartitionReassignRequest(t *testing.T) {
 			},
 		},
 		{
-			input: []PartitionDistribution{},
+			input: []PartitionReplicas{},
 			expected: ReassignmentReq{
 				Version:    1,
-				Partitions: []PartitionDistribution{},
+				Partitions: []PartitionReplicas{},
 			},
 		},
 	}
@@ -635,7 +635,7 @@ func TestCluster_ReassignPartitions(t *testing.T) {
 		{
 			input: ReassignmentReq{
 				Version: 1,
-				Partitions: []PartitionDistribution{
+				Partitions: []PartitionReplicas{
 					{"kafka-topic-1", 0, []BrokerID{2, 1}},
 					{"kafka-topic-1", 1, []BrokerID{1, 2}},
 					{"kafka-topic-1", 2, []BrokerID{2, 1}},
@@ -646,7 +646,7 @@ func TestCluster_ReassignPartitions(t *testing.T) {
 		{
 			input: ReassignmentReq{
 				Version: 1,
-				Partitions: []PartitionDistribution{
+				Partitions: []PartitionReplicas{
 					{"kafka-topic-1", 0, []BrokerID{2, 1}},
 					{"kafka-topic-1", 1, []BrokerID{1, 2}},
 					{"kafka-topic-2", 0, []BrokerID{1, 1}},
